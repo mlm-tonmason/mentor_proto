@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package mentor.client.memory;
+
+option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/client/memory";
+
+import "mentor/types/memory.proto";
+import "mentor/types/chat.proto";
+
+// Сервис управления памятью и профилем пользователя у аватаров.
+service MemoryService {
+    // Получить память взаимодействия с ботом.
+    rpc GetAvatarMemory(GetAvatarMemoryRequest) returns (GetAvatarMemoryResponse);
+
+    // Обновить память (клиентские данные).
+    rpc UpdateAvatarMemory(UpdateAvatarMemoryRequest) returns (UpdateAvatarMemoryResponse);
+
+    // Сбросить память бота ("Забыть меня").
+    rpc ResetAvatarMemory(ResetAvatarMemoryRequest) returns (ResetAvatarMemoryResponse);
+
+    // Получить саммари диалогов.
+    rpc ListDialogueSummaries(ListDialogueSummariesRequest) returns (ListDialogueSummariesResponse);
+}
+
+message GetAvatarMemoryRequest {
+    string bot_id = 1;
+}
+
+message GetAvatarMemoryResponse {
+    mentor.types.AvatarUserMemory memory = 1;
+}
+
+message UpdateAvatarMemoryRequest {
+    string bot_id = 1;
+    mentor.types.AvatarUserMemory memory = 2;
+}
+
+message UpdateAvatarMemoryResponse {
+    mentor.types.AvatarUserMemory memory = 1;
+}
+
+message ResetAvatarMemoryRequest {
+    string bot_id = 1;
+}
+
+message ResetAvatarMemoryResponse {
+    bool success = 1;
+}
+
+message ListDialogueSummariesRequest {
+    string bot_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListDialogueSummariesResponse {
+    repeated mentor.types.DialogueSummary items = 1;
+    string next_page_token = 2;
+}

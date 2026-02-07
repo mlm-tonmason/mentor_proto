@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package mentor.types.chat;
+
+import "mentor/types/common.proto";
+import "mentor/types/bot.proto";
+import "google/protobuf/timestamp.proto";
+
+// --- Enums ---
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_USER = 1;
+  ROLE_BOT = 2;
+  ROLE_SYSTEM = 3;
+}
+
+enum ContentType {
+  CONTENT_TYPE_UNSPECIFIED = 0;
+  CONTENT_TYPE_TEXT = 1;
+  CONTENT_TYPE_AUDIO = 2;
+  CONTENT_TYPE_IMAGE = 3;
+}
+
+enum ChatMode {
+  CHAT_MODE_UNSPECIFIED = 0;
+  CHAT_MODE_TEXT = 1;
+  CHAT_MODE_VOICE = 2;
+}
+
+// --- Models ---
+
+// Chat Thread (Dialogue Session)
+message ChatThread {
+  uint32 id = 1;
+  uint32 bot_id = 2;
+  string user_id = 3; // UUID
+  
+  string title = 4; // User editable title
+  
+  // Status
+  bool is_pinned = 5;
+  bool is_archived = 6;
+  uint32 unread_count = 7;
+  
+  // Last activity for sorting
+  google.protobuf.Timestamp updated_at = 8;
+  Message last_message = 9;
+
+  // Settings
+  ChatMode response_mode = 10;
+  bool sinking_mode_enabled = 11;
+
+  // Preview of the Bot
+  mentor.types.bot.Bot bot_snapshot = 12;
+}
+
+// Single Message
+message Message {
+  string id = 1; // UUID
+  uint32 thread_id = 2;
+  
+  Role role = 3;
+  
+  string content = 4; // Text body
+  
+  // Attachments
+  repeated Attachment attachments = 5;
+  
+  // Metadata
+  google.protobuf.Timestamp created_at = 6;
+  bool is_favorite = 7;
+  
+  // User feedback on this message
+  uint32 rating_score = 8; // 1-5 (if rated)
+}
+
+message Attachment {
+  ContentType type = 1;
+  string url = 2; // e.g. S3 link to audio/image
+  string transcription = 3; // For audio messages
+  string preview_url = 4; // Thumbnail for video/image
+}
+
+// Real-time Event (Server -> Client Stream)
+message ChatEvent {
+  oneof event {
+    TypingIndicator typing = 1;
+    Message new_message = 2;
+    Error error = 3;
+  }
+}
+
+message TypingIndicator {
+  bool is_typing = 1;
+  string action_description = 2; // "Thinking...", "Recording voice..."
+}
+
+message Error {
+  string code = 1;
+  string message = 2;
+}

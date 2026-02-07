@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package mentor.types.memory;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// Structured Memory (Facts about user)
+message AvatarUserMemory {
+  string user_id = 1; // UUID
+  uint32 bot_id = 2;
+  
+  // Structured JSON data (e.g. { "name": "John", "likes": ["cats"] })
+  google.protobuf.Struct data = 3; 
+
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+// Flat Key-Value Memory (Settings / Flags)
+message AvatarUserKVMemory {
+  string user_id = 1;
+  uint32 bot_id = 2;
+  
+  map<string, string> items = 3;
+}

@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package mentor.types;
+
+option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/types";
+
+import "google/protobuf/timestamp.proto";
+import "mentor/types/common.proto";
+
+// Пользователь платформы Mentor.
+message User {
+    message Id {
+        oneof identifier {
+            string network_user_id = 1; // ID пользователя в системе Network (TonMason)
+        }
+    }
+
+    message List {
+        repeated User items = 1;
+    }
+
+    message Settings {
+        // Язык интерфейса ("en", "ru").
+        string interface_language = 1;
+
+        message Theme {
+            enum Id {
+                UNSPECIFIED = 0;
+                LIGHT = 1;
+                DARK = 2;
+                SYSTEM = 3;
+            }
+        }
+        Theme.Id theme = 2;
+
+        // Включены ли анимации.
+        bool animations_enabled = 3;
+    }
+
+    message AuthMethod {
+        message Provider {
+            enum Id {
+                UNSPECIFIED = 0;
+                TELEGRAM = 1;
+                EMAIL = 2;
+                GOOGLE = 3;
+            }
+        }
+        Provider.Id provider = 1;
+        string identifier = 2; // ID или email для отображения
+    }
+
+    string network_user_id = 1; // Дублируем для удобства доступа
+    string username = 2;
+    string avatar_url = 3;
+    
+    Settings settings = 4;
+    repeated AuthMethod auth_methods = 5;
+    
+    // Баланс пользователя (Read-Only из внешнего сервиса).
+    message Balance {
+        Money money = 1;
+        string deposit_url = 2; // Ссылка на внешнюю страницу пополнения
+    }
+    Balance balance = 6;
+
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
+}
+
+// Глобальная конфигурация системы.
+message SystemConfig {
+    message Locale {
+        string code = 1; // 'en', 'ru'
+        string display_name = 2; // 'English', 'Русский'
+    }
+    repeated Locale supported_locales = 1;
+
+    message ExchangeRate {
+        string pair = 1; // "TON/USD"
+        string rate = 2; // Текущий курс
+        google.protobuf.Timestamp updated_at = 3;
+    }
+}

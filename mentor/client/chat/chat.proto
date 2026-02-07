@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package mentor.client.chat;
+
+option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/client/chat";
+
+import "mentor/types/chat.proto";
+
+// Сервис управления чатами и сообщениями.
+service ChatService {
+    // Получить список чатов (для сайдбара).
+    rpc ListChats(ListChatsRequest) returns (ListChatsResponse);
+
+    // Управление закреплением.
+    rpc PinChat(PinChatRequest) returns (PinChatResponse);
+    rpc UnpinChat(UnpinChatRequest) returns (UnpinChatResponse);
+
+    // Архивация.
+    rpc ArchiveChat(ArchiveChatRequest) returns (ArchiveChatResponse);
+    rpc UnarchiveChat(UnarchiveChatRequest) returns (UnarchiveChatResponse);
+    rpc ArchiveAllBotChats(ArchiveAllBotChatsRequest) returns (ArchiveAllBotChatsResponse);
+    rpc UnarchiveAllBotChats(UnarchiveAllBotChatsRequest) returns (UnarchiveAllBotChatsResponse);
+
+    // Отправка сообщения.
+    rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+
+    // Очистка истории чата.
+    rpc ClearChatHistory(ClearChatHistoryRequest) returns (ClearChatHistoryResponse);
+
+    // Получение истории сообщений.
+    rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+
+    // Избранные сообщения.
+    rpc ToggleMessageFavorite(ToggleMessageFavoriteRequest) returns (ToggleMessageFavoriteResponse);
+    rpc ListFavoriteMessages(ListFavoriteMessagesRequest) returns (ListFavoriteMessagesResponse);
+}
+
+message ListChatsRequest {
+    string bot_id = 1; // Опционально: фильтр по боту
+    
+    enum Scope {
+        UNSPECIFIED = 0;
+        ACTIVE = 1;
+        ARCHIVED = 2;
+    }
+    Scope scope = 2;
+
+    int32 page_size = 3;
+    string page_token = 4;
+}
+
+message ListChatsResponse {
+    repeated mentor.types.ChatThread items = 1;
+    string next_page_token = 2;
+}
+
+message PinChatRequest { string thread_id = 1; }
+message PinChatResponse {}
+
+message UnpinChatRequest { string thread_id = 1; }
+message UnpinChatResponse {}
+
+message ArchiveChatRequest { string thread_id = 1; }
+message ArchiveChatResponse {}
+
+message UnarchiveChatRequest { string thread_id = 1; }
+message UnarchiveChatResponse {}
+
+message ArchiveAllBotChatsRequest { string bot_id = 1; }
+message ArchiveAllBotChatsResponse {}
+
+message UnarchiveAllBotChatsRequest { string bot_id = 1; }
+message UnarchiveAllBotChatsResponse {}
+
+message SendMessageRequest {
+    string bot_id = 1;
+    string thread_id = 2; // Если пусто, будет создан новый тред
+    
+    mentor.types.Message.Content content = 3;
+    bool sinking_mode = 4; // Режим "думать дольше"
+}
+
+message SendMessageResponse {
+    mentor.types.Message user_message = 1;
+    mentor.types.Message bot_response = 2; // Если unary, иначе может быть стриминг
+}
+
+message ClearChatHistoryRequest { string thread_id = 1; }
+message ClearChatHistoryResponse { bool success = 1; }
+
+message ListMessagesRequest {
+    string thread_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListMessagesResponse {
+    repeated mentor.types.Message items = 1;
+    string next_page_token = 2;
+}
+
+message ToggleMessageFavoriteRequest { string message_id = 1; }
+message ToggleMessageFavoriteResponse { bool is_favorite = 1; }
+
+message ListFavoriteMessagesRequest {
+    string bot_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListFavoriteMessagesResponse {
+    repeated mentor.types.Message items = 1;
+    string next_page_token = 2;
+}

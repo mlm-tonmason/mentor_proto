@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package mentor.types.bot;
+
+import "mentor/types/common.proto";
+import "google/protobuf/timestamp.proto";
+
+// --- Enums ---
+
+enum BotGenre {
+  BOT_GENRE_UNSPECIFIED = 0;
+  BOT_GENRE_TWIN = 1; // User-created replica
+  BOT_GENRE_EXPERT = 2; // Organization-created expert
+}
+
+enum CreatorType {
+  CREATOR_TYPE_UNSPECIFIED = 0;
+  CREATOR_TYPE_USER = 1;
+  CREATOR_TYPE_COMPANY = 2;
+}
+
+// --- Models ---
+
+// Bot Entity
+message Bot {
+  uint32 id = 1;
+  
+  // External Provider Link
+  string provider_bot_id = 9;
+
+  // Identity
+  string system_name = 2; // @handle
+  string display_name = 3;
+  string avatar_url = 4;
+  
+  // Descriptions
+  string short_description = 5;
+  string long_description = 6;
+
+  // Creator Info
+  CreatorInfo creator = 7;
+  
+  // Classification
+  BotGenre genre = 8;
+  repeated string tags = 10;
+
+  // Stats & Flags
+  bool is_expert = 11;
+  bool is_hot = 12;
+  bool is_favorite = 13; // Contextual (for current user)
+  bool is_subscribed = 14; // Contextual
+
+  BotRatingStats rating = 15;
+  uint32 subscribers_count = 16;
+
+  // Configuration
+  VoiceOptions voice_options = 17;
+
+  // Versioning
+  google.protobuf.Timestamp updated_at = 18;
+  uint32 version = 19;
+}
+
+message CreatorInfo {
+  // If User -> userId (UUID string), If Company -> companyId (u32)
+  string id = 1; 
+  CreatorType type = 2;
+  string name = 3; // Display name of creator
+}
+
+message BotRatingStats {
+  float average = 1; // 1.0 - 5.0
+  uint32 count = 2;  // Total votes
+  
+  // Histogram: star (1-5) -> count
+  map<uint32, uint32> distribution = 3;
+}
+
+message VoiceOptions {
+  repeated string allowed_voice_ids = 1;
+  string default_voice_id = 2;
+}
+
+// User's Rating Action
+message BotRating {
+  uint32 bot_id = 1;
+  string user_id = 2; // UUID
+  uint32 score = 3; // 1-5
+  google.protobuf.Timestamp created_at = 4;
+}

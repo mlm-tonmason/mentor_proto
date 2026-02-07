@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package mentor.client.market;
+
+option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/client/market";
+
+import "google/protobuf/timestamp.proto";
+import "mentor/types/bot.proto";
+import "mentor/types/billing.proto";
+
+// Сервис каталога и подписок.
+service MarketService {
+    // Каталог ботов.
+    rpc ListBots(ListBotsRequest) returns (ListBotsResponse);
+    rpc GetBot(GetBotRequest) returns (GetBotResponse);
+
+    // Избранное.
+    rpc AddToFavorites(AddToFavoritesRequest) returns (AddToFavoritesResponse);
+    rpc RemoveFromFavorites(RemoveFromFavoritesRequest) returns (RemoveFromFavoritesResponse);
+
+    // Библиотека (Боты с активной подпиской).
+    rpc ListMyLibrary(ListMyLibraryRequest) returns (ListMyLibraryResponse);
+
+    // Подписки и Лимиты.
+    rpc Subscribe(SubscribeRequest) returns (SubscribeResponse);
+    rpc GetQuotaDashboard(GetQuotaDashboardRequest) returns (GetQuotaDashboardResponse);
+}
+
+message ListBotsRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+
+    string category = 3;
+    bool is_expert = 4;
+    bool is_hot = 5;
+    bool is_favorite = 6;
+}
+
+message ListBotsResponse {
+    repeated mentor.types.Bot items = 1;
+    string next_page_token = 2;
+}
+
+message GetBotRequest { string bot_id = 1; }
+message GetBotResponse { mentor.types.Bot bot = 1; }
+
+message AddToFavoritesRequest { string bot_id = 1; }
+message AddToFavoritesResponse {}
+
+message RemoveFromFavoritesRequest { string bot_id = 1; }
+message RemoveFromFavoritesResponse {}
+
+message ListMyLibraryRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+    bool only_favorites = 3;
+}
+
+message ListMyLibraryResponse {
+    repeated mentor.types.Bot items = 1;
+    string next_page_token = 2;
+}
+
+message SubscribeRequest {
+    string plan_id = 1;
+    mentor.types.Subscription.PaymentType.Id payment_type = 2;
+    bool auto_renew = 3;
+}
+
+message SubscribeResponse {
+    bool success = 1;
+    string error_message = 2;
+    google.protobuf.Timestamp expires_at = 3;
+}
+
+message GetQuotaDashboardRequest {}
+message GetQuotaDashboardResponse {
+    mentor.types.SubscriptionDashboardData dashboard = 1;
+}

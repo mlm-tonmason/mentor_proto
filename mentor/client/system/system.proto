@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package mentor.client.system;
+
+option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/client/system";
+
+import "google/protobuf/timestamp.proto";
+import "mentor/types/user.proto";
+
+// Сервис системных данных.
+service SystemService {
+    // Получить конфигурацию системы.
+    rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+
+    // Стрим курсов валют.
+    rpc StreamExchangeRates(StreamExchangeRatesRequest) returns (stream ExchangeRateUpdate);
+}
+
+message GetConfigRequest {}
+
+message GetConfigResponse {
+    mentor.types.SystemConfig config = 1;
+}
+
+message StreamExchangeRatesRequest {
+    repeated string pairs = 1; // Например, ["TON/USD"]
+}
+
+message ExchangeRateUpdate {
+    string pair = 1;
+    string rate = 2;
+    google.protobuf.Timestamp updated_at = 3;
+}

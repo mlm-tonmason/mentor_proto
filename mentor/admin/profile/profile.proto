@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package mentor.admin.profile;
+
+option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/admin/profile";
+
+import "mentor/types/memory.proto";
+
+// Админ-сервис управления шаблонами профилей.
+service ProfileAdminService {
+    // Шаблоны.
+    rpc CreateTemplate(CreateTemplateRequest) returns (CreateTemplateResponse);
+    rpc UpdateTemplate(UpdateTemplateRequest) returns (UpdateTemplateResponse);
+    rpc ListTemplates(ListTemplatesRequest) returns (ListTemplatesResponse);
+
+    // Версионирование.
+    rpc CreateTemplateVersion(CreateTemplateVersionRequest) returns (CreateTemplateVersionResponse);
+    rpc GetTemplateVersion(GetTemplateVersionRequest) returns (GetTemplateVersionResponse);
+
+    // Привязка к ботам.
+    rpc BindBotToTemplate(BindBotToTemplateRequest) returns (BindBotToTemplateResponse);
+}
+
+message CreateTemplateRequest {
+    mentor.types.UserProfileTemplate template = 1;
+}
+
+message CreateTemplateResponse {
+    mentor.types.UserProfileTemplate template = 1;
+}
+
+message UpdateTemplateRequest {
+    mentor.types.UserProfileTemplate template = 1;
+}
+
+message UpdateTemplateResponse {
+    mentor.types.UserProfileTemplate template = 1;
+}
+
+message ListTemplatesRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+message ListTemplatesResponse {
+    repeated mentor.types.UserProfileTemplate items = 1;
+    string next_page_token = 2;
+}
+
+message CreateTemplateVersionRequest {
+    mentor.types.UserProfileTemplateVersion version = 1;
+}
+
+message CreateTemplateVersionResponse {
+    mentor.types.UserProfileTemplateVersion version = 1;
+}
+
+message GetTemplateVersionRequest {
+    string template_id = 1;
+    string version = 2;
+}
+
+message GetTemplateVersionResponse {
+    mentor.types.UserProfileTemplateVersion version = 1;
+}
+
+message BindBotToTemplateRequest {
+    string bot_id = 1;
+    string template_id = 2;
+}
+
+message BindBotToTemplateResponse {
+    bool success = 1;
+}

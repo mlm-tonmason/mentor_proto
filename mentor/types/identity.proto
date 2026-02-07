@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package mentor.types.identity;
+
+import "google/protobuf/timestamp.proto";
+import "mentor/types/common.proto";
+
+// --- Enums ---
+
+enum Theme {
+  THEME_UNSPECIFIED = 0;
+  THEME_LIGHT = 1;
+  THEME_DARK = 2;
+  THEME_SYSTEM = 3;
+}
+
+// --- Models ---
+
+// User (Internal Platform User)
+message User {
+  // Unique User ID (UUID string)
+  string id = 1;
+
+  // External network ID (SSO, e.g. from Telegram)
+  string network_user_id = 9;
+
+  // User Settings
+  UserSettings settings = 2;
+
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+// User-specific adjustable settings
+message UserSettings {
+  // Interface language code (en, ru)
+  string interface_language = 1;
+
+  // UI Theme preference
+  Theme theme = 2;
+
+  // Heavy animations toggle (true = enabled)
+  bool animations_enabled = 3;
+}
+
+// Rich User Profile (Aggregated API Response)
+message UserProfile {
+  // Core user data
+  User user = 1;
+
+  // Data from external network (Real-time sync)
+  NetworkData network_data = 2;
+}
+
+// External Network Data (e.g. from Telegram/TON)
+message NetworkData {
+  string username = 1;
+  string avatar_url = 2;
+
+  // Multi-currency wallet balances
+  repeated BalanceItem balances = 3;
+
+  // Link to deposit page
+  string deposit_url = 4;
+}
+
+// Atomic balance item
+message BalanceItem {
+  // Balance amount as string ("10.500")
+  string amount = 1;
+
+  // Code/ID of the currency
+  uint32 currency_id = 2;
+}
+
+// Currency definition
+message Currency {
+  uint32 id = 1;
+  string code = 2; // TON, USDT, POINTS
+  string display_name = 3;
+  string symbol = 4; // $, 💎
+  int32 decimals = 5;
+}
+
+// Exchange Rate Pair
+message ExchangePair {
+  string base_currency = 1; // e.g. USD
+  string quote_currency = 2; // e.g. TON
+  string rate = 3; // "0.5" (how much quote for 1 base)
+}
+
+// System Configuration
+message SystemConfig {
+  repeated Locale supported_locales = 1;
+}
+
+message Locale {
+  string code = 1;
+  string display_name = 2;
+}

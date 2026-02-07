@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package mentor.types;
+
+// Money represents a monetary value with a specific currency.
+// We use string for amount to avoid floating point errors.
+message Money {
+  // Amount in string format (e.g. "10.50", "0.00000123")
+  string amount = 1;
+
+  // Unique identifier of the currency (from Currency dictionary)
+  uint32 currency_id = 2;
+}
+
+// Pagination request parameters
+message PageRequest {
+  // Number of items to return (default 20, max 100)
+  int32 page_size = 1;
+
+  // Token for the next page (received from previous response)
+  string page_token = 2;
+}
+
+// Pagination response parameters
+message PageResponse {
+  // Token to retrieve the next page
+  string next_page_token = 1;
+
+  // Total items count (optional, might be heavy to calculate)
+  int32 total_count = 2;
+}
+
+// Sort order direction
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0;
+  SORT_ORDER_ASC = 1;
+  SORT_ORDER_DESC = 2;
+}
+
+// Date range for filtering
+message DateRange {
+  // Start date (inclusive)
+  google.protobuf.Timestamp from = 1;
+
+  // End date (inclusive)
+  google.protobuf.Timestamp to = 2;
+}
+
+import "google/protobuf/timestamp.proto";

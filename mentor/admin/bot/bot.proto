@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package mentor.admin.bot;
+
+option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/admin/bot";
+
+import "mentor/types/bot.proto";
+import "mentor/types/billing.proto";
+
+// Админ-сервис управления ботами.
+service BotAdminService {
+    rpc CreateBot(CreateBotRequest) returns (CreateBotResponse);
+    rpc UpdateBot(UpdateBotRequest) returns (UpdateBotResponse);
+    rpc DeleteBot(DeleteBotRequest) returns (DeleteBotResponse);
+    rpc ListBots(ListBotsRequest) returns (ListBotsResponse);
+
+    // Управление тарифами бота.
+    rpc CreatePricingPlan(CreatePricingPlanRequest) returns (CreatePricingPlanResponse);
+    rpc UpdatePricingPlan(UpdatePricingPlanRequest) returns (UpdatePricingPlanResponse);
+}
+
+message CreateBotRequest {
+    mentor.types.Bot bot = 1;
+}
+
+message CreateBotResponse {
+    mentor.types.Bot bot = 1;
+}
+
+message UpdateBotRequest {
+    mentor.types.Bot bot = 1;
+}
+
+message UpdateBotResponse {
+    mentor.types.Bot bot = 1;
+}
+
+message DeleteBotRequest {
+    string bot_id = 1;
+}
+
+message DeleteBotResponse {
+    bool success = 1;
+}
+
+message ListBotsRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+message ListBotsResponse {
+    repeated mentor.types.Bot items = 1;
+    string next_page_token = 2;
+}
+
+message CreatePricingPlanRequest {
+    mentor.types.PricingPlan plan = 1;
+}
+
+message CreatePricingPlanResponse {
+    mentor.types.PricingPlan plan = 1;
+}
+
+message UpdatePricingPlanRequest {
+    mentor.types.PricingPlan plan = 1;
+}
+
+message UpdatePricingPlanResponse {
+    mentor.types.PricingPlan plan = 1;
+}

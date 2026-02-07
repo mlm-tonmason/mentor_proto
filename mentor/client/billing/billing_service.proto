@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package mentor.client.billing;
+
+import "mentor/types/billing.proto";
+import "mentor/types/common.proto";
+
+// --- Requests ---
+
+message GetSubscriptionDashboardRequest {}
+
+message GetTransactionHistoryRequest {
+  mentor.types.PageRequest pagination = 1;
+}
+
+message ChangeSubscriptionRequest {
+  string subscription_id = 1; // Existing subscription
+  uint32 new_plan_id = 2; // Target plan
+}
+
+message ToggleAutoRenewRequest {
+  string subscription_id = 1;
+  bool enabled = 2; // true to enable auto-renew
+}
+
+message DepositRequest {
+  string amount = 1; // "10.00"
+  uint32 currency_id = 2;
+}
+
+// --- Responses ---
+
+message GetTransactionHistoryResponse {
+  repeated mentor.types.billing.Transaction transactions = 1;
+  mentor.types.PageResponse pagination = 2;
+}
+
+message ChangeSubscriptionResponse {
+  bool success = 1;
+  string message = 2; // e.g. "Plan changed successfully" or "Changes will apply next period"
+  mentor.types.billing.Subscription updated_subscription = 3;
+}
+
+message ToggleAutoRenewResponse {
+  bool success = 1;
+  mentor.types.billing.Subscription updated_subscription = 2;
+}
+
+message DepositResponse {
+  string payment_url = 1; // Redirect URL
+  string invoice_id = 2;
+}
+
+service BillingService {
+  // Returns aggregated dashboard data (Totals + List of Subs)
+  rpc GetSubscriptionDashboard(GetSubscriptionDashboardRequest) returns (mentor.types.billing.SubscriptionDashboardData);
+
+  // Returns paginated transaction/invoice history
+  rpc GetTransactionHistory(GetTransactionHistoryRequest) returns (GetTransactionHistoryResponse);
+
+  // Upgrade or Downgrade a subscription plan
+  rpc ChangeSubscription(ChangeSubscriptionRequest) returns (ChangeSubscriptionResponse);
+
+  // Enable/Disable auto-renewal
+  rpc ToggleAutoRenew(ToggleAutoRenewRequest) returns (ToggleAutoRenewResponse);
+
+  // Generate a payment link for deposit
+  rpc Deposit(DepositRequest) returns (DepositResponse);
+}

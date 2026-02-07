@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package mentor.client.identity;
+
+import "mentor/types/identity.proto";
+
+message GetMyProfileRequest {}
+
+message UpdateSettingsRequest {
+  string interface_language = 1;
+  // Other settings are usually done per-device/locally, but if synced use this.
+}
+
+service IdentityService {
+  rpc GetMyProfile(GetMyProfileRequest) returns (mentor.types.identity.UserProfile);
+  rpc UpdateSettings(UpdateSettingsRequest) returns (mentor.types.identity.UserProfile);
+}

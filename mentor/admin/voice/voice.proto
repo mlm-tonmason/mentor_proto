@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package mentor.admin.voice;
+
+option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/admin/voice";
+
+// Админ-сервис управления голосами.
+service VoiceAdminService {
+    rpc ListAvailableVoices(ListAvailableVoicesRequest) returns (ListAvailableVoicesResponse);
+    rpc RegisterVoice(RegisterVoiceRequest) returns (RegisterVoiceResponse);
+}
+
+message ListAvailableVoicesRequest {
+    string language_code = 1;
+}
+
+message ListAvailableVoicesResponse {
+    repeated Voice voices = 1;
+}
+
+message RegisterVoiceRequest {
+    Voice voice = 1;
+}
+
+message RegisterVoiceResponse {
+    Voice voice = 1;
+}
+
+message Voice {
+    string id = 1; // ID от провайдера
+    string display_name = 2;
+    string language_code = 3;
+    string gender = 4;
+    string style = 5;
+    string provider_name = 6;
+}
