@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package mentor.client.auth;
+
+import "mentor/types/identity.proto";
+
+// Сервис Аутентификации (Управление сессиями).
+service AuthService {
+  // Вход через Telegram (Mini App / Widget).
+  rpc Login(LoginRequest) returns (LoginResponse);
+
+  // Обновление токена доступа.
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+
+  // Выход из системы.
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
+
+// Вход в систему.
+message LoginRequest {
+  oneof credentials {
+    // Строка `initData` от Telegram WebApp.
+    string telegram_init_data = 1;
+    
+    // Для разработки: статический токен.
+    string dev_token = 2;
+  }
+}
+
+message LoginResponse {
+  string access_token = 1;  // JWT (Short-lived)
+  string refresh_token = 2; // JWT (Long-lived)
+  
+  // Профиль пользователя сразу при входе (оптимизация).
+  mentor.types.identity.UserProfile profile = 3;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2; // Может обновляться (Rotation).
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {
+  bool success = 1;
+}

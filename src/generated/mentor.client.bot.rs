@@ -3,31 +3,38 @@
 pub struct ListBotsRequest {
     #[prost(message, optional, tag = "1")]
     pub pagination: ::core::option::Option<super::super::types::PageRequest>,
-    /// Filters
+    /// Текстовый поиск (по имени и описанию).
     ///
-    /// Not used in Workshop but maybe useful
+    /// Опционально.
     #[prost(string, tag = "2")]
     pub search_query: ::prost::alloc::string::String,
-    /// TWIN or EXPERT
+    /// Фильтр по жанру (Двойник или Эксперт).
     #[prost(enumeration = "super::super::types::bot::BotGenre", tag = "3")]
     pub genre: i32,
-    /// e.g. "Business"
+    /// Фильтр по категории (тегу).
+    ///
+    /// Например, "Бизнес", "IT".
     #[prost(string, tag = "4")]
     pub category_tag: ::prost::alloc::string::String,
+    /// Флаги фильтрации.
+    ///
+    /// Только трендовые.
     #[prost(bool, tag = "5")]
     pub is_hot: bool,
+    /// Только "Мои избранные".
     #[prost(bool, tag = "6")]
     pub is_favorite: bool,
+    /// Только те, на кого есть подписка (Библиотека).
     #[prost(bool, tag = "7")]
     pub is_subscribed: bool,
-    #[prost(enumeration = "list_bots_request::Sort", tag = "8")]
+    #[prost(enumeration = "list_bots_request::SortField", tag = "8")]
     pub sort: i32,
     #[prost(enumeration = "super::super::types::SortOrder", tag = "9")]
     pub sort_order: i32,
 }
 /// Nested message and enum types in `ListBotsRequest`.
 pub mod list_bots_request {
-    /// Sorting
+    /// Сортировка.
     #[derive(
         Clone,
         Copy,
@@ -40,34 +47,35 @@ pub mod list_bots_request {
         ::prost::Enumeration
     )]
     #[repr(i32)]
-    pub enum Sort {
-        Unspecified = 0,
-        Newest = 1,
-        /// Subscribers count
-        Popular = 2,
-        /// Rating
-        TopRated = 3,
+    pub enum SortField {
+        SortUnspecified = 0,
+        /// По дате добавления.
+        SortNewest = 1,
+        /// По количеству подписчиков.
+        SortPopular = 2,
+        /// По рейтингу.
+        SortTopRated = 3,
     }
-    impl Sort {
+    impl SortField {
         /// String value of the enum field names used in the ProtoBuf definition.
         ///
         /// The values are not transformed in any way and thus are considered stable
         /// (if the ProtoBuf definition does not change) and safe for programmatic use.
         pub fn as_str_name(&self) -> &'static str {
             match self {
-                Self::Unspecified => "SORT_UNSPECIFIED",
-                Self::Newest => "SORT_NEWEST",
-                Self::Popular => "SORT_POPULAR",
-                Self::TopRated => "SORT_TOP_RATED",
+                Self::SortUnspecified => "SORT_UNSPECIFIED",
+                Self::SortNewest => "SORT_NEWEST",
+                Self::SortPopular => "SORT_POPULAR",
+                Self::SortTopRated => "SORT_TOP_RATED",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
         pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
             match value {
-                "SORT_UNSPECIFIED" => Some(Self::Unspecified),
-                "SORT_NEWEST" => Some(Self::Newest),
-                "SORT_POPULAR" => Some(Self::Popular),
-                "SORT_TOP_RATED" => Some(Self::TopRated),
+                "SORT_UNSPECIFIED" => Some(Self::SortUnspecified),
+                "SORT_NEWEST" => Some(Self::SortNewest),
+                "SORT_POPULAR" => Some(Self::SortPopular),
+                "SORT_TOP_RATED" => Some(Self::SortTopRated),
                 _ => None,
             }
         }
@@ -92,7 +100,7 @@ pub struct ToggleBotFavoriteRequest {
 }
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ToggleBotFavoriteResponse {
-    /// New state
+    /// Новое состояние.
     #[prost(bool, tag = "1")]
     pub is_favorite: bool,
 }
@@ -100,7 +108,7 @@ pub struct ToggleBotFavoriteResponse {
 pub struct RateBotRequest {
     #[prost(uint32, tag = "1")]
     pub bot_id: u32,
-    /// 1-5
+    /// Оценка от 1 до 5.
     #[prost(uint32, tag = "2")]
     pub score: u32,
 }
@@ -108,7 +116,7 @@ pub struct RateBotRequest {
 pub struct RateBotResponse {
     #[prost(bool, tag = "1")]
     pub success: bool,
-    /// Updated stats
+    /// Обновленная статистика (чтобы сразу перерисовать UI).
     #[prost(message, optional, tag = "2")]
     pub new_rating_stats: ::core::option::Option<
         super::super::types::bot::BotRatingStats,
@@ -127,6 +135,7 @@ pub mod bot_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with BotServiceServer.
     #[async_trait]
     pub trait BotService: std::marker::Send + std::marker::Sync + 'static {
+        /// Получить каталог ботов с фильтрацией (для главной и поиска).
         async fn list_bots(
             &self,
             request: tonic::Request<super::ListBotsRequest>,
@@ -134,6 +143,7 @@ pub mod bot_service_server {
             tonic::Response<super::ListBotsResponse>,
             tonic::Status,
         >;
+        /// Получить детальную информацию о конкретном боте.
         async fn get_bot(
             &self,
             request: tonic::Request<super::GetBotRequest>,
@@ -141,6 +151,7 @@ pub mod bot_service_server {
             tonic::Response<super::super::super::types::bot::Bot>,
             tonic::Status,
         >;
+        /// Добавить/Убрать бота из "Избранного" (или "Моя библиотека").
         async fn toggle_bot_favorite(
             &self,
             request: tonic::Request<super::ToggleBotFavoriteRequest>,
@@ -148,11 +159,13 @@ pub mod bot_service_server {
             tonic::Response<super::ToggleBotFavoriteResponse>,
             tonic::Status,
         >;
+        /// Оценить бота (поставить рейтинг).
         async fn rate_bot(
             &self,
             request: tonic::Request<super::RateBotRequest>,
         ) -> std::result::Result<tonic::Response<super::RateBotResponse>, tonic::Status>;
     }
+    /// Сервис Ботов (Маркетплейс Ассистентов).
     #[derive(Debug)]
     pub struct BotServiceServer<T> {
         inner: Arc<T>,

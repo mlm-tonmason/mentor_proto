@@ -2,37 +2,12 @@
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetSubscriptionDashboardRequest {}
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct GetTransactionHistoryRequest {
+pub struct GetTransactionsRequest {
     #[prost(message, optional, tag = "1")]
     pub pagination: ::core::option::Option<super::super::types::PageRequest>,
 }
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct ChangeSubscriptionRequest {
-    /// Existing subscription
-    #[prost(string, tag = "1")]
-    pub subscription_id: ::prost::alloc::string::String,
-    /// Target plan
-    #[prost(uint32, tag = "2")]
-    pub new_plan_id: u32,
-}
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct ToggleAutoRenewRequest {
-    #[prost(string, tag = "1")]
-    pub subscription_id: ::prost::alloc::string::String,
-    /// true to enable auto-renew
-    #[prost(bool, tag = "2")]
-    pub enabled: bool,
-}
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct DepositRequest {
-    /// "10.00"
-    #[prost(string, tag = "1")]
-    pub amount: ::prost::alloc::string::String,
-    #[prost(uint32, tag = "2")]
-    pub currency_id: u32,
-}
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetTransactionHistoryResponse {
+pub struct GetTransactionsResponse {
     #[prost(message, repeated, tag = "1")]
     pub transactions: ::prost::alloc::vec::Vec<
         super::super::types::billing::Transaction,
@@ -40,17 +15,39 @@ pub struct GetTransactionHistoryResponse {
     #[prost(message, optional, tag = "2")]
     pub pagination: ::core::option::Option<super::super::types::PageResponse>,
 }
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GetTransactionRequest {
+    #[prost(string, tag = "1")]
+    pub transaction_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ChangeSubscriptionRequest {
+    /// Существующая подписка.
+    #[prost(string, tag = "1")]
+    pub subscription_id: ::prost::alloc::string::String,
+    /// Новый план.
+    #[prost(uint32, tag = "2")]
+    pub new_plan_id: u32,
+}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChangeSubscriptionResponse {
     #[prost(bool, tag = "1")]
     pub success: bool,
-    /// e.g. "Plan changed successfully" or "Changes will apply next period"
+    /// "План успешно изменен" или "Изменения вступят в силу в новом периоде".
     #[prost(string, tag = "2")]
     pub message: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "3")]
     pub updated_subscription: ::core::option::Option<
         super::super::types::billing::Subscription,
     >,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ToggleAutoRenewRequest {
+    #[prost(string, tag = "1")]
+    pub subscription_id: ::prost::alloc::string::String,
+    /// true = включить, false = выключить.
+    #[prost(bool, tag = "2")]
+    pub enabled: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ToggleAutoRenewResponse {
@@ -62,10 +59,19 @@ pub struct ToggleAutoRenewResponse {
     >,
 }
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DepositRequest {
+    /// "10.00"
+    #[prost(string, tag = "1")]
+    pub amount: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "2")]
+    pub currency_id: u32,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DepositResponse {
-    /// Redirect URL
+    /// Ссылка на оплату.
     #[prost(string, tag = "1")]
     pub payment_url: ::prost::alloc::string::String,
+    /// ID инвойса.
     #[prost(string, tag = "2")]
     pub invoice_id: ::prost::alloc::string::String,
 }
@@ -82,7 +88,7 @@ pub mod billing_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with BillingServiceServer.
     #[async_trait]
     pub trait BillingService: std::marker::Send + std::marker::Sync + 'static {
-        /// Returns aggregated dashboard data (Totals + List of Subs)
+        /// Получить дашборд подписок (Суммы, Балансы, Активные подписки).
         async fn get_subscription_dashboard(
             &self,
             request: tonic::Request<super::GetSubscriptionDashboardRequest>,
@@ -92,15 +98,23 @@ pub mod billing_service_server {
             >,
             tonic::Status,
         >;
-        /// Returns paginated transaction/invoice history
-        async fn get_transaction_history(
+        /// Получить историю транзакций (Пополнения, Списания, Награды).
+        async fn get_transactions(
             &self,
-            request: tonic::Request<super::GetTransactionHistoryRequest>,
+            request: tonic::Request<super::GetTransactionsRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::GetTransactionHistoryResponse>,
+            tonic::Response<super::GetTransactionsResponse>,
             tonic::Status,
         >;
-        /// Upgrade or Downgrade a subscription plan
+        /// Получить детали конкретной транзакции.
+        async fn get_transaction(
+            &self,
+            request: tonic::Request<super::GetTransactionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::super::super::types::billing::Transaction>,
+            tonic::Status,
+        >;
+        /// Сменить подписку (Upgrade/Downgrade).
         async fn change_subscription(
             &self,
             request: tonic::Request<super::ChangeSubscriptionRequest>,
@@ -108,7 +122,7 @@ pub mod billing_service_server {
             tonic::Response<super::ChangeSubscriptionResponse>,
             tonic::Status,
         >;
-        /// Enable/Disable auto-renewal
+        /// Включить/Выключить автопродление.
         async fn toggle_auto_renew(
             &self,
             request: tonic::Request<super::ToggleAutoRenewRequest>,
@@ -116,12 +130,13 @@ pub mod billing_service_server {
             tonic::Response<super::ToggleAutoRenewResponse>,
             tonic::Status,
         >;
-        /// Generate a payment link for deposit
+        /// Создать запрос на пополнение баланса (Генерация ссылки).
         async fn deposit(
             &self,
             request: tonic::Request<super::DepositRequest>,
         ) -> std::result::Result<tonic::Response<super::DepositResponse>, tonic::Status>;
     }
+    /// Сервис Биллинга (Клиентский API).
     #[derive(Debug)]
     pub struct BillingServiceServer<T> {
         inner: Arc<T>,
@@ -249,28 +264,25 @@ pub mod billing_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/mentor.client.billing.BillingService/GetTransactionHistory" => {
+                "/mentor.client.billing.BillingService/GetTransactions" => {
                     #[allow(non_camel_case_types)]
-                    struct GetTransactionHistorySvc<T: BillingService>(pub Arc<T>);
+                    struct GetTransactionsSvc<T: BillingService>(pub Arc<T>);
                     impl<
                         T: BillingService,
-                    > tonic::server::UnaryService<super::GetTransactionHistoryRequest>
-                    for GetTransactionHistorySvc<T> {
-                        type Response = super::GetTransactionHistoryResponse;
+                    > tonic::server::UnaryService<super::GetTransactionsRequest>
+                    for GetTransactionsSvc<T> {
+                        type Response = super::GetTransactionsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::GetTransactionHistoryRequest>,
+                            request: tonic::Request<super::GetTransactionsRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as BillingService>::get_transaction_history(
-                                        &inner,
-                                        request,
-                                    )
+                                <T as BillingService>::get_transactions(&inner, request)
                                     .await
                             };
                             Box::pin(fut)
@@ -282,7 +294,53 @@ pub mod billing_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = GetTransactionHistorySvc(inner);
+                        let method = GetTransactionsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/mentor.client.billing.BillingService/GetTransaction" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetTransactionSvc<T: BillingService>(pub Arc<T>);
+                    impl<
+                        T: BillingService,
+                    > tonic::server::UnaryService<super::GetTransactionRequest>
+                    for GetTransactionSvc<T> {
+                        type Response = super::super::super::types::billing::Transaction;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetTransactionRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as BillingService>::get_transaction(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = GetTransactionSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

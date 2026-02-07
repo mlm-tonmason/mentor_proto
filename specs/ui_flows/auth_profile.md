@@ -24,7 +24,7 @@
 * **API Метод**: `IdentityService/GetMyProfile`
 * **Модель**: `UserProfile` + `User.networkData`
 * **Отображение**:
-    * **Аватар**: `networkData.avatarUrl` (Круглый, 64x64).
+    * **NFT аватарка**: `networkData.avatarUrl` (Круглый, 64x64).
     * **Username**: `networkData.username`.
     * **Статус**: "Logged in via Telegram".
 * **Действия**:

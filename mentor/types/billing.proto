@@ -5,106 +5,135 @@ package mentor.types.billing;
 import "mentor/types/common.proto";
 import "google/protobuf/timestamp.proto";
 
-// --- Enums ---
+// --- Перечисления (Enums) ---
 
-// Plan Status
+// Статус тарифного плана.
 enum PricingPlanStatus {
-  PRICING_PLAN_STATUS_UNSPECIFIED = 0;
-  PRICING_PLAN_STATUS_DRAFT = 1;
-  PRICING_PLAN_STATUS_ACTIVE = 2;
-  PRICING_PLAN_STATUS_ARCHIVED = 3;
+  PRICING_PLAN_STATUS_UNSPECIFIED = 0; // Не указан
+  PRICING_PLAN_STATUS_DRAFT = 1;       // Черновик (виден только автору)
+  PRICING_PLAN_STATUS_ACTIVE = 2;      // Активен (виден всем)
+  PRICING_PLAN_STATUS_ARCHIVED = 3;    // В архиве (доступен только старым подписчикам)
 }
 
-// Plan Type
+// Тип тарифного плана.
 enum PricingPlanType {
-  PRICING_PLAN_TYPE_UNSPECIFIED = 0;
-  PRICING_PLAN_TYPE_SUBSCRIPTION = 1; // Default content subscription
-  PRICING_PLAN_TYPE_CREATOR_ACCESS = 2; // Paid access to create bots
+  PRICING_PLAN_TYPE_UNSPECIFIED = 0;     // Не указан
+  PRICING_PLAN_TYPE_SUBSCRIPTION = 1;    // Подписка на контент (ботов)
+  PRICING_PLAN_TYPE_CREATOR_ACCESS = 2;  // Платная услуга для создателей
 }
 
-// Subscription Status
+// Статус подписки.
 enum SubscriptionStatus {
-  SUBSCRIPTION_STATUS_UNSPECIFIED = 0;
-  SUBSCRIPTION_STATUS_ACTIVE = 1;
-  SUBSCRIPTION_STATUS_CANCELLED = 2;
-  SUBSCRIPTION_STATUS_EXPIRED = 3;
-  SUBSCRIPTION_STATUS_SUSPENDED = 4; // Payment failed
+  SUBSCRIPTION_STATUS_UNSPECIFIED = 0; // Не указан
+  SUBSCRIPTION_STATUS_ACTIVE = 1;      // Активна
+  SUBSCRIPTION_STATUS_CANCELLED = 2;   // Отменена (действует до конца периода)
+  SUBSCRIPTION_STATUS_EXPIRED = 3;     // Истекла
+  SUBSCRIPTION_STATUS_SUSPENDED = 4;   // Приостановлена (ошибка оплаты)
 }
 
-// Payment Type
+// Тип оплаты.
 enum PaymentType {
-  PAYMENT_TYPE_UNSPECIFIED = 0;
-  PAYMENT_TYPE_PREPAID = 1; // One-time payment
-  PAYMENT_TYPE_RECURRING = 2; // Monthly subscription
+  PAYMENT_TYPE_UNSPECIFIED = 0; // Не указан
+  PAYMENT_TYPE_PREPAID = 1;     // Разовая оплата за весь период
+  PAYMENT_TYPE_RECURRING = 2;   // Рекуррентная подписка (ежемесячно)
 }
 
-// --- Models ---
+// Статус транзакции.
+enum TransactionStatus {
+  TRANSACTION_STATUS_UNSPECIFIED = 0; // Не указан
+  TRANSACTION_STATUS_PENDING = 1;     // В ожидании
+  TRANSACTION_STATUS_COMPLETED = 2;   // Завершена успешно
+  TRANSACTION_STATUS_FAILED = 3;      // Ошибка
+}
 
-// Pricing Plan (Subscription Plan)
+// Тип транзакции.
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0; // Не указан
+  TRANSACTION_TYPE_DEPOSIT = 1;     // Пополнение
+  TRANSACTION_TYPE_PURCHASE = 2;    // Покупка
+  TRANSACTION_TYPE_REFUND = 3;      // Возврат
+  TRANSACTION_TYPE_REWARD = 4;      // Награда
+}
+
+// Направление транзакции.
+enum TransactionDirection {
+  TRANSACTION_DIRECTION_UNSPECIFIED = 0; // Не указано
+  TRANSACTION_DIRECTION_INCOMING = 1;    // Входящая (+)
+  TRANSACTION_DIRECTION_OUTGOING = 2;    // Исходящая (-)
+}
+
+// --- Модели ---
+
+// Тарифный План.
 message PricingPlan {
   uint32 id = 1;
 
-  // Creator User ID or Company ID (u32, assuming users are u32? Wait, User ID is UUID string)
-  // The spec says "creatorId (u32)". Let's stick to u32 for now, maybe creator is a different entity ID space?
-  // Actually, User ID in identity.proto is string UUID. But PricingPlan spec says u32.
-  // I will use string to be safe if it refers to User.
-  string creator_id = 2;
+  // ID создателя (Пользователь или Компания).
+  uint32 creator_id = 2;
 
   PricingPlanStatus status = 3;
   PricingPlanType type = 4;
 
-  // Price configuration
-  string price = 5; // "10.00"
+  // Цена ("10.00").
+  string price = 5;
   uint32 currency_id = 6;
   
-  // Duration in months
+  // Длительность в месяцах.
   uint32 duration_months = 7;
 
-  // Feature flags / constraints
+  // Дополнительные параметры (JSON map).
   map<string, string> features = 8;
   
-  // Quota Rules included in this plan
+  // Правила квот, включенные в этот план.
   repeated QuotaRule quota_rules = 9;
 
   google.protobuf.Timestamp created_at = 10;
   google.protobuf.Timestamp updated_at = 11;
 }
 
-// Rule for calculating quota limits
+// Правило для расчета лимитов (Квота).
 message QuotaRule {
   uint32 id = 1;
   uint32 plan_id = 2;
 
-  // Quota Template Parameters
+  // Шаблон настроек лимита.
   QuotaTemplate quota_template = 3;
 
-  // List of Bot IDs included in this quota group
+  // Список ID ботов, входящих в эту группу.
   repeated uint32 included_bot_ids = 4;
 }
 
-// Quota Template Configuration
+// Шаблон настроек квоты.
 message QuotaTemplate {
-  // e.g. "MESSAGE", "CALL_MINUTES"
+  // Тип ресурса (MESSAGE, CALL_MINUTES).
   string resource_type = 1;
 
-  // Limit per cycle (e.g. 50)
+  // Лимит на один цикл.
   int32 limit_per_cycle = 2;
 
-  // Cycle duration (e.g. "1d", "1m")
-  string cycle_duration_iso = 3; 
+  // Длительность цикла (ISO 8601 duration, например "P1D").
+  string cycle_duration = 3; 
 
-  // Rollover limit (cumulative)
+  // Лимит накопления остатков.
   int32 rollover_limit = 4;
 }
 
-// User Subscription
+// Подписка пользователя.
 message Subscription {
   string id = 1; // UUID
   string user_id = 2; // UUID
   
-  // Plan details snapshot or reference
+  // Ссылка на план.
   uint32 plan_id = 3;
-  PricingPlan plan_snapshot = 4; // Optional full details
+  
+  // Краткая копия плана на момент покупки (историчность).
+  PricingPlan plan_snapshot = 4; 
+
+  // Опционально: Конкретный бот, на которого куплена подписка (если план Individual).
+  string bot_id = 11; // ID бота (если известно, что это один бот). Хотя bot_id у нас u32.
+  // Исправление: Bot ID у нас u32. Но в spec написано uuid. 
+  // Мы договорились использовать u32 для Bot ID.
+  uint32 bot_id_u32 = 12; 
 
   SubscriptionStatus status = 5;
   PaymentType payment_type = 6;
@@ -113,34 +142,35 @@ message Subscription {
   google.protobuf.Timestamp expires_at = 8;
 
   bool auto_renew = 9;
-  string total_price = 10; // Total contract price
+  string total_price = 10; // Общая сумма контракта.
 }
 
-// Dashboard Data
+// Агрегированные данные для дашборда подписок.
 message SubscriptionDashboardData {
-  string total_monthly_payment = 1; // "150.00"
+  string total_monthly_payment = 1; 
   int32 call_balance_seconds = 2;
   repeated Subscription subscriptions = 3;
 }
 
-// Transaction History Item
+// Финансовая транзакция.
 message Transaction {
-  string id = 1;
-  string user_id = 2;
+  string id = 1; // UUID
+  string user_id = 2; // UUID
   
-  string description = 3;
-  string amount = 4; // "-10.00"
-  uint32 currency_id = 5;
+  TransactionType type = 3;
+  TransactionStatus status = 4;
+  
+  string amount = 5; // Абсолютное значение ("10.50")
+  uint32 currency_id = 6;
+  
+  TransactionDirection direction = 7;
+  
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp completed_at = 9;
 
-  enum Status {
-    STATUS_UNSPECIFIED = 0;
-    STATUS_PENDING = 1;
-    STATUS_SUCCESS = 2;
-    STATUS_FAILED = 3;
-  }
-  Status status = 6;
-
-  google.protobuf.Timestamp created_at = 7;
-
-  string invoice_id = 8;
+  // Ссылка на внешний объект (ID подписки и т.д.)
+  string reference_id = 10;
+  
+  // ID во внешней платежной системе.
+  string external_tx_id = 11;
 }

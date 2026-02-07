@@ -2,113 +2,139 @@ syntax = "proto3";
 
 package mentor.client.chat;
 
-option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/client/chat";
-
 import "mentor/types/chat.proto";
+import "mentor/types/common.proto";
 
-// Сервис управления чатами и сообщениями.
+// Сервис Чата (Клиентский API).
 service ChatService {
-    // Получить список чатов (для сайдбара).
-    rpc ListChats(ListChatsRequest) returns (ListChatsResponse);
+  // --- Управление Чатами (Сессиями) ---
 
-    // Управление закреплением.
-    rpc PinChat(PinChatRequest) returns (PinChatResponse);
-    rpc UnpinChat(UnpinChatRequest) returns (UnpinChatResponse);
+  // Получить список чатов (с пагинацией и фильтрами).
+  rpc ListChats(ListChatsRequest) returns (ListChatsResponse);
 
-    // Архивация.
-    rpc ArchiveChat(ArchiveChatRequest) returns (ArchiveChatResponse);
-    rpc UnarchiveChat(UnarchiveChatRequest) returns (UnarchiveChatResponse);
-    rpc ArchiveAllBotChats(ArchiveAllBotChatsRequest) returns (ArchiveAllBotChatsResponse);
-    rpc UnarchiveAllBotChats(UnarchiveAllBotChatsRequest) returns (UnarchiveAllBotChatsResponse);
+  // Обновить настройки чата (название, режим ответа).
+  rpc UpdateChatThread(UpdateChatThreadRequest) returns (mentor.types.chat.ChatThread);
 
-    // Отправка сообщения.
-    rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  // Удалить чат (Soft delete или полная очистка).
+  rpc DeleteChatThread(DeleteChatThreadRequest) returns (DeleteChatThreadResponse);
+  
+  // Архивация / Разархивация чата.
+  rpc ArchiveChat(ArchiveChatRequest) returns (mentor.types.chat.ChatThread);
 
-    // Очистка истории чата.
-    rpc ClearChatHistory(ClearChatHistoryRequest) returns (ClearChatHistoryResponse);
+  // Закрепление / Открепление чата.
+  rpc PinChat(PinChatRequest) returns (mentor.types.chat.ChatThread);
 
-    // Получение истории сообщений.
-    rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+  // Изменение порядка закрепленных чатов (Drag & Drop).
+  rpc ReorderPinnedChats(ReorderPinnedChatsRequest) returns (ListChatsResponse);
 
-    // Избранные сообщения.
-    rpc ToggleMessageFavorite(ToggleMessageFavoriteRequest) returns (ToggleMessageFavoriteResponse);
-    rpc ListFavoriteMessages(ListFavoriteMessagesRequest) returns (ListFavoriteMessagesResponse);
+  // --- Сообщения ---
+
+  // Получить историю сообщений чата.
+  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
+
+  // Отправить сообщение боту.
+  rpc SendMessage(SendMessageRequest) returns (mentor.types.chat.Message);
+
+  // Добавить/Убрать сообщение из избранного.
+  rpc ToggleMessageFavorite(ToggleMessageFavoriteRequest) returns (ToggleMessageFavoriteResponse);
+
+  // --- Real-time ---
+
+  // Подписка на события чата (Тайпинг, Новые сообщения, Ошибки).
+  rpc SubscribeToEvents(SubscribeToEventsRequest) returns (stream mentor.types.chat.ChatEvent);
 }
 
-message ListChatsRequest {
-    string bot_id = 1; // Опционально: фильтр по боту
-    
-    enum Scope {
-        UNSPECIFIED = 0;
-        ACTIVE = 1;
-        ARCHIVED = 2;
-    }
-    Scope scope = 2;
+// --- Запросы и Ответы ---
 
-    int32 page_size = 3;
-    string page_token = 4;
+message ListChatsRequest {
+  mentor.types.PageRequest pagination = 1;
+
+  // Фильтр по ID бота (опционально).
+  uint32 bot_id = 2; 
+  
+  // Только закрепленные.
+  bool only_pinned = 3;
+
+  // Статус архивации (false = активные, true = архивные).
+  // Если не указано (null), может возвращать все (зависит от логики, но обычно разделяют).
+  bool is_archived = 4; 
 }
 
 message ListChatsResponse {
-    repeated mentor.types.ChatThread items = 1;
-    string next_page_token = 2;
+  repeated mentor.types.chat.ChatThread threads = 1;
+  mentor.types.PageResponse pagination = 2;
 }
 
-message PinChatRequest { string thread_id = 1; }
-message PinChatResponse {}
+message UpdateChatThreadRequest {
+  uint32 thread_id = 1;
+  
+  // Поля для обновления (если указаны).
+  string title = 2; // Переименовать.
+  mentor.types.chat.ChatMode response_mode = 3; // Сменить режим (Текст/Голос).
+  bool sinking_mode_enabled = 4; // Включить/Выключить Sinking Mode.
+}
 
-message UnpinChatRequest { string thread_id = 1; }
-message UnpinChatResponse {}
+message DeleteChatThreadRequest {
+  uint32 thread_id = 1;
+}
 
-message ArchiveChatRequest { string thread_id = 1; }
-message ArchiveChatResponse {}
+message DeleteChatThreadResponse {
+  bool success = 1;
+}
 
-message UnarchiveChatRequest { string thread_id = 1; }
-message UnarchiveChatResponse {}
+message ArchiveChatRequest {
+  uint32 thread_id = 1;
+  bool archived = 2; // true = в архив, false = вернуть.
+}
 
-message ArchiveAllBotChatsRequest { string bot_id = 1; }
-message ArchiveAllBotChatsResponse {}
+message PinChatRequest {
+  uint32 thread_id = 1;
+  bool pinned = 2; // true = закрепить, false = открепить.
+}
 
-message UnarchiveAllBotChatsRequest { string bot_id = 1; }
-message UnarchiveAllBotChatsResponse {}
+message ReorderPinnedChatsRequest {
+  repeated uint32 thread_ids = 1; // Новый порядок ID.
+}
+
+message GetHistoryRequest {
+  uint32 thread_id = 1;
+  mentor.types.PageRequest pagination = 2;
+  
+  // Фильтр: только избранные.
+  bool only_favorites = 3;
+}
+
+message GetHistoryResponse {
+  repeated mentor.types.chat.Message messages = 1;
+  mentor.types.PageResponse pagination = 2;
+}
 
 message SendMessageRequest {
-    string bot_id = 1;
-    string thread_id = 2; // Если пусто, будет создан новый тред
-    
-    mentor.types.Message.Content content = 3;
-    bool sinking_mode = 4; // Режим "думать дольше"
+  uint32 thread_id = 1;
+  
+  // Контент сообщения (oneof).
+  // Упрощенная структура для отправки (клиент может слать текст или ссылку на медиа).
+  oneof content {
+    string text = 2;
+    // Для отправки файлов, клиент сначала грузит их в S3 (через отдельный UploadService),
+    // а сюда присылает URL.
+    string audio_url = 3; 
+    string image_url = 4;
+    string file_url = 5;
+  }
+  
+  // Локальный ID для идемпотентности (опционально).
+  string local_id = 6; 
 }
 
-message SendMessageResponse {
-    mentor.types.Message user_message = 1;
-    mentor.types.Message bot_response = 2; // Если unary, иначе может быть стриминг
+message ToggleMessageFavoriteRequest {
+  string message_id = 1;
 }
 
-message ClearChatHistoryRequest { string thread_id = 1; }
-message ClearChatHistoryResponse { bool success = 1; }
-
-message ListMessagesRequest {
-    string thread_id = 1;
-    int32 page_size = 2;
-    string page_token = 3;
+message ToggleMessageFavoriteResponse {
+  bool is_favorite = 1; // Новое состояние.
 }
 
-message ListMessagesResponse {
-    repeated mentor.types.Message items = 1;
-    string next_page_token = 2;
-}
-
-message ToggleMessageFavoriteRequest { string message_id = 1; }
-message ToggleMessageFavoriteResponse { bool is_favorite = 1; }
-
-message ListFavoriteMessagesRequest {
-    string bot_id = 1;
-    int32 page_size = 2;
-    string page_token = 3;
-}
-
-message ListFavoriteMessagesResponse {
-    repeated mentor.types.Message items = 1;
-    string next_page_token = 2;
+message SubscribeToEventsRequest {
+  uint32 thread_id = 1;
 }

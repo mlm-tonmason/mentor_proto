@@ -5,21 +5,36 @@ package mentor.types.memory;
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 
-// Structured Memory (Facts about user)
-message AvatarUserMemory {
+// Модели Памяти (Контекст пользователя).
+
+// Структурированная память Бота о Пользователе (Факты).
+message BotUserMemory {
   string user_id = 1; // UUID
-  uint32 bot_id = 2;
-  
-  // Structured JSON data (e.g. { "name": "John", "likes": ["cats"] })
-  google.protobuf.Struct data = 3; 
+  uint32 bot_id = 2;  // ID Бота
+
+  // Структурированные данные (например, { "name": "John", "hobbies": ["web3"] }).
+  // Заполняются LLM в фоне.
+  google.protobuf.Struct data = 3;
 
   google.protobuf.Timestamp updated_at = 4;
 }
 
-// Flat Key-Value Memory (Settings / Flags)
-message AvatarUserKVMemory {
-  string user_id = 1;
+// Плоская память "Ключ-Значение" (Настройки/Флаги).
+// Инжектится в System Prompt: `USER_THEME=Dark`.
+message BotUserKVMemory {
+  string user_id = 1; // UUID
   uint32 bot_id = 2;
-  
-  map<string, string> items = 3;
+
+  // Карта строковых значений.
+  map<string, string> items = 3; 
+}
+
+// Краткое содержание диалога (Саммари).
+message DialogueSummary {
+  uint32 dialogue_session_id = 1; // Ссылка на сессию
+
+  // Текстовая выжимка ("Пользователь интересовался курсом TON...").
+  string content = 2; 
+
+  google.protobuf.Timestamp created_at = 3;
 }

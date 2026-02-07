@@ -2,48 +2,48 @@ syntax = "proto3";
 
 package mentor.types;
 
-// Money represents a monetary value with a specific currency.
-// We use string for amount to avoid floating point errors.
+import "google/protobuf/timestamp.proto";
+
+// Деньги (денежная сумма).
+// Используется string для точного представления decimal.
 message Money {
-  // Amount in string format (e.g. "10.50", "0.00000123")
+  // Сумма в строковом формате (например, "10.50", "0.00000123").
   string amount = 1;
 
-  // Unique identifier of the currency (from Currency dictionary)
+  // Уникальный идентификатор валюты (из справочника Currency).
   uint32 currency_id = 2;
 }
 
-// Pagination request parameters
+// Запрос с пагинацией.
 message PageRequest {
-  // Number of items to return (default 20, max 100)
+  // Количество элементов на странице (по умолчанию 20, макс 100).
   int32 page_size = 1;
 
-  // Token for the next page (received from previous response)
+  // Токен следующей страницы (получен из предыдущего ответа).
   string page_token = 2;
 }
 
-// Pagination response parameters
+// Ответ с пагинацией.
 message PageResponse {
-  // Token to retrieve the next page
+  // Токен для получения следующей страницы.
   string next_page_token = 1;
 
-  // Total items count (optional, might be heavy to calculate)
+  // Общее количество элементов (опционально).
   int32 total_count = 2;
 }
 
-// Sort order direction
+// Направление сортировки.
 enum SortOrder {
-  SORT_ORDER_UNSPECIFIED = 0;
-  SORT_ORDER_ASC = 1;
-  SORT_ORDER_DESC = 2;
+  SORT_ORDER_UNSPECIFIED = 0; // Не указано
+  SORT_ORDER_ASC = 1;         // По возрастанию
+  SORT_ORDER_DESC = 2;        // По убыванию
 }
 
-// Date range for filtering
+// Диапазон дат для фильтрации.
 message DateRange {
-  // Start date (inclusive)
+  // Начальная дата (включительно).
   google.protobuf.Timestamp from = 1;
 
-  // End date (inclusive)
+  // Конечная дата (включительно).
   google.protobuf.Timestamp to = 2;
 }
-
-import "google/protobuf/timestamp.proto";

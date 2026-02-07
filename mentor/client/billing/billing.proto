@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package mentor.client.billing;
+
+import "mentor/types/billing.proto";
+import "mentor/types/common.proto";
+
+// Сервис Биллинга (Клиентский API).
+service BillingService {
+  // Получить дашборд подписок (Суммы, Балансы, Активные подписки).
+  rpc GetSubscriptionDashboard(GetSubscriptionDashboardRequest) returns (mentor.types.billing.SubscriptionDashboardData);
+
+  // Получить историю транзакций (Пополнения, Списания, Награды).
+  rpc GetTransactions(GetTransactionsRequest) returns (GetTransactionsResponse);
+
+  // Получить детали конкретной транзакции.
+  rpc GetTransaction(GetTransactionRequest) returns (mentor.types.billing.Transaction);
+
+  // Сменить подписку (Upgrade/Downgrade).
+  rpc ChangeSubscription(ChangeSubscriptionRequest) returns (ChangeSubscriptionResponse);
+
+  // Включить/Выключить автопродление.
+  rpc ToggleAutoRenew(ToggleAutoRenewRequest) returns (ToggleAutoRenewResponse);
+
+  // Создать запрос на пополнение баланса (Генерация ссылки).
+  rpc Deposit(DepositRequest) returns (DepositResponse);
+}
+
+// --- Запросы и Ответы ---
+
+message GetSubscriptionDashboardRequest {}
+
+message GetTransactionsRequest {
+  mentor.types.PageRequest pagination = 1;
+}
+
+message GetTransactionsResponse {
+  repeated mentor.types.billing.Transaction transactions = 1;
+  mentor.types.PageResponse pagination = 2;
+}
+
+message GetTransactionRequest {
+  string transaction_id = 1;
+}
+
+message ChangeSubscriptionRequest {
+  string subscription_id = 1; // Существующая подписка.
+  uint32 new_plan_id = 2; // Новый план.
+}
+
+message ChangeSubscriptionResponse {
+  bool success = 1;
+  string message = 2; // "План успешно изменен" или "Изменения вступят в силу в новом периоде".
+  mentor.types.billing.Subscription updated_subscription = 3;
+}
+
+message ToggleAutoRenewRequest {
+  string subscription_id = 1;
+  bool enabled = 2; // true = включить, false = выключить.
+}
+
+message ToggleAutoRenewResponse {
+  bool success = 1;
+  mentor.types.billing.Subscription updated_subscription = 2;
+}
+
+message DepositRequest {
+  string amount = 1; // "10.00"
+  uint32 currency_id = 2;
+}
+
+message DepositResponse {
+  string payment_url = 1; // Ссылка на оплату.
+  string invoice_id = 2;  // ID инвойса.
+}

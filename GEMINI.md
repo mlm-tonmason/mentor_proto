@@ -15,4 +15,4 @@ The protobuf definitions follow the structure:
 - `mentor/admin/`: Admin-facing API services.
 
 ## Agent Rules
-See `.agent/rules/` for role and style guidelines.
+See `.agent/rules/` for detailed guidelines.

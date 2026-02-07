@@ -8,7 +8,7 @@ pub struct GetMemoryRequest {
 pub struct UpdateMemoryRequest {
     #[prost(uint32, tag = "1")]
     pub bot_id: u32,
-    /// Merge or Replace? Usually merge.
+    /// Данные для слияния (Merge) или замены.
     #[prost(message, optional, tag = "2")]
     pub data: ::core::option::Option<::prost_types::Struct>,
 }
@@ -21,7 +21,7 @@ pub struct GetKvMemoryRequest {
 pub struct UpdateKvMemoryRequest {
     #[prost(uint32, tag = "1")]
     pub bot_id: u32,
-    /// Keys to update
+    /// Карта ключей для обновления (существующие перезапишутся, новые добавятся).
     #[prost(map = "string, string", tag = "2")]
     pub items: ::std::collections::HashMap<
         ::prost::alloc::string::String,
@@ -41,37 +41,40 @@ pub mod memory_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with MemoryServiceServer.
     #[async_trait]
     pub trait MemoryService: std::marker::Send + std::marker::Sync + 'static {
-        /// Read/Write Structured Facts
+        /// Получить "факты", которые бот знает о пользователе.
         async fn get_memory(
             &self,
             request: tonic::Request<super::GetMemoryRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::super::super::types::memory::AvatarUserMemory>,
+            tonic::Response<super::super::super::types::memory::BotUserMemory>,
             tonic::Status,
         >;
+        /// Обновить/Дополнить память (обычно делает сам бот, но доступно и клиенту).
         async fn update_memory(
             &self,
             request: tonic::Request<super::UpdateMemoryRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::super::super::types::memory::AvatarUserMemory>,
+            tonic::Response<super::super::super::types::memory::BotUserMemory>,
             tonic::Status,
         >;
-        /// Read/Write Flat KV Settings
+        /// Получить настройки "Ключ-Значение".
         async fn get_kv_memory(
             &self,
             request: tonic::Request<super::GetKvMemoryRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::super::super::types::memory::AvatarUserKvMemory>,
+            tonic::Response<super::super::super::types::memory::BotUserKvMemory>,
             tonic::Status,
         >;
+        /// Обновить настройки (например, user_theme="dark").
         async fn update_kv_memory(
             &self,
             request: tonic::Request<super::UpdateKvMemoryRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::super::super::types::memory::AvatarUserKvMemory>,
+            tonic::Response<super::super::super::types::memory::BotUserKvMemory>,
             tonic::Status,
         >;
     }
+    /// Сервис управления памятью и настройками Бота (RAG).
     #[derive(Debug)]
     pub struct MemoryServiceServer<T> {
         inner: Arc<T>,
@@ -155,7 +158,7 @@ pub mod memory_service_server {
                         T: MemoryService,
                     > tonic::server::UnaryService<super::GetMemoryRequest>
                     for GetMemorySvc<T> {
-                        type Response = super::super::super::types::memory::AvatarUserMemory;
+                        type Response = super::super::super::types::memory::BotUserMemory;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
@@ -200,7 +203,7 @@ pub mod memory_service_server {
                         T: MemoryService,
                     > tonic::server::UnaryService<super::UpdateMemoryRequest>
                     for UpdateMemorySvc<T> {
-                        type Response = super::super::super::types::memory::AvatarUserMemory;
+                        type Response = super::super::super::types::memory::BotUserMemory;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
@@ -245,7 +248,7 @@ pub mod memory_service_server {
                         T: MemoryService,
                     > tonic::server::UnaryService<super::GetKvMemoryRequest>
                     for GetKVMemorySvc<T> {
-                        type Response = super::super::super::types::memory::AvatarUserKvMemory;
+                        type Response = super::super::super::types::memory::BotUserKvMemory;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
@@ -290,7 +293,7 @@ pub mod memory_service_server {
                         T: MemoryService,
                     > tonic::server::UnaryService<super::UpdateKvMemoryRequest>
                     for UpdateKVMemorySvc<T> {
-                        type Response = super::super::super::types::memory::AvatarUserKvMemory;
+                        type Response = super::super::super::types::memory::BotUserKvMemory;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,

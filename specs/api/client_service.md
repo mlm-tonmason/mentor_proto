@@ -13,6 +13,8 @@
 * `ListMyLibrary`: Моя библиотека (подписки).
 * `Subscribe`: Купить подписку.
 * `GetQuotaDashboard`: Дашборд лимитов и квот.
+* `GetTransactions`: История финансовых операций (New).
+* `GetTransaction`: Детали транзакции (New).
 
 ## 3. Сервис Чата (Chat Service)
 * `SendMessage`: Отправить сообщение.
@@ -27,9 +29,9 @@
 * `EndCall`: Завершить звонок.
 
 ## 5. Сервис Памяти (Memory Service)
-* `GetAvatarMemory`: Получить память аватара о пользователе.
-* `UpdateAvatarMemory`: Обновить память вручную.
-* `ResetAvatarMemory`: "Забыть меня".
+* `GetBotMemory`: Получить память бота о пользователе.
+* `UpdateBotMemory`: Обновить память вручную.
+* `ResetBotMemory`: "Забыть меня".
 
 ## 6. Системный Сервис (System Service)
 * `GetConfig`: Получить конфиг (локали и т.д.).

@@ -1,3 +1,9 @@
+---
+trigger: always_on
+glob: "**/*.proto"
+description: "Mentor Project Assistant"
+---
+
 # Role: Mentor Project Assistant
 
 You are an assistant working on the "package mentor" project, which is a protobuf definition library for a client service with avatars.
@@ -10,6 +16,5 @@ You are an assistant working on the "package mentor" project, which is a protobu
 
 ## Project Context
 - **Specification**: All project requirements and domain logic are located in the `specs/` directory. You MUST read these files to understand the business logic.
-- This project follows the structure of `biconom/proto`.
 - The root package is `mentor`.
 - We use strict protobuf style guidelines.

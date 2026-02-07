@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package mentor.client.identity;
+
+import "mentor/types/identity.proto";
+
+// Сервис Идентификации (Профиль и Настройки).
+service IdentityService {
+  // Получить "себя" (детализированный профиль текущего пользователя).
+  rpc GetMyProfile(GetMyProfileRequest) returns (mentor.types.identity.UserProfile);
+
+  // Обновить настройки пользователя (язык, тема).
+  rpc UpdateSettings(UpdateSettingsRequest) returns (mentor.types.identity.UserProfile);
+}
+
+// Запрос профиля.
+message GetMyProfileRequest {}
+
+// Запрос на обновление настроек.
+message UpdateSettingsRequest {
+  string interface_language = 1; // "en", "ru".
+  mentor.types.identity.Theme theme = 2; // Светлая/Темная.
+  bool animations_enabled = 3; // Отключить анимации (для слабых устройств).
+}

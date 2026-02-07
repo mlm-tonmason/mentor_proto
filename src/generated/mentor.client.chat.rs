@@ -3,14 +3,14 @@
 pub struct ListChatsRequest {
     #[prost(message, optional, tag = "1")]
     pub pagination: ::core::option::Option<super::super::types::PageRequest>,
-    /// Filter
-    ///
-    /// Optional: List chats for specific bot
+    /// Фильтр по ID бота (опционально).
     #[prost(uint32, tag = "2")]
     pub bot_id: u32,
+    /// Только закрепленные.
     #[prost(bool, tag = "3")]
     pub only_pinned: bool,
-    /// Use false for active chats
+    /// Статус архивации (false = активные, true = архивные).
+    /// Если не указано (null), может возвращать все (зависит от логики, но обычно разделяют).
     #[prost(bool, tag = "4")]
     pub is_archived: bool,
 }
@@ -25,13 +25,15 @@ pub struct ListChatsResponse {
 pub struct UpdateChatThreadRequest {
     #[prost(uint32, tag = "1")]
     pub thread_id: u32,
-    /// Fields to update (if provided)
+    /// Поля для обновления (если указаны).
     ///
-    /// Rename
+    /// Переименовать.
     #[prost(string, tag = "2")]
     pub title: ::prost::alloc::string::String,
+    /// Сменить режим (Текст/Голос).
     #[prost(enumeration = "super::super::types::chat::ChatMode", tag = "3")]
     pub response_mode: i32,
+    /// Включить/Выключить Sinking Mode.
     #[prost(bool, tag = "4")]
     pub sinking_mode_enabled: bool,
 }
@@ -49,7 +51,7 @@ pub struct DeleteChatThreadResponse {
 pub struct ArchiveChatRequest {
     #[prost(uint32, tag = "1")]
     pub thread_id: u32,
-    /// true = archive, false = unarchive
+    /// true = в архив, false = вернуть.
     #[prost(bool, tag = "2")]
     pub archived: bool,
 }
@@ -57,13 +59,13 @@ pub struct ArchiveChatRequest {
 pub struct PinChatRequest {
     #[prost(uint32, tag = "1")]
     pub thread_id: u32,
-    /// true = pin, false = unpin
+    /// true = закрепить, false = открепить.
     #[prost(bool, tag = "2")]
     pub pinned: bool,
 }
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ReorderPinnedChatsRequest {
-    /// New order
+    /// Новый порядок ID.
     #[prost(uint32, repeated, tag = "1")]
     pub thread_ids: ::prost::alloc::vec::Vec<u32>,
 }
@@ -73,7 +75,7 @@ pub struct GetHistoryRequest {
     pub thread_id: u32,
     #[prost(message, optional, tag = "2")]
     pub pagination: ::core::option::Option<super::super::types::PageRequest>,
-    /// Filters
+    /// Фильтр: только избранные.
     #[prost(bool, tag = "3")]
     pub only_favorites: bool,
 }
@@ -88,23 +90,30 @@ pub struct GetHistoryResponse {
 pub struct SendMessageRequest {
     #[prost(uint32, tag = "1")]
     pub thread_id: u32,
-    /// Client generated ID for idempotency?
-    #[prost(string, tag = "5")]
+    /// Локальный ID для идемпотентности (опционально).
+    #[prost(string, tag = "6")]
     pub local_id: ::prost::alloc::string::String,
-    #[prost(oneof = "send_message_request::Content", tags = "2, 3, 4")]
+    /// Контент сообщения (oneof).
+    /// Упрощенная структура для отправки (клиент может слать текст или ссылку на медиа).
+    #[prost(oneof = "send_message_request::Content", tags = "2, 3, 4, 5")]
     pub content: ::core::option::Option<send_message_request::Content>,
 }
 /// Nested message and enum types in `SendMessageRequest`.
 pub mod send_message_request {
+    /// Контент сообщения (oneof).
+    /// Упрощенная структура для отправки (клиент может слать текст или ссылку на медиа).
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum Content {
         #[prost(string, tag = "2")]
         Text(::prost::alloc::string::String),
+        /// Для отправки файлов, клиент сначала грузит их в S3 (через отдельный UploadService),
+        /// а сюда присылает URL.
         #[prost(string, tag = "3")]
         AudioUrl(::prost::alloc::string::String),
-        /// Or just reusing Message structure but simpler
         #[prost(string, tag = "4")]
         ImageUrl(::prost::alloc::string::String),
+        #[prost(string, tag = "5")]
+        FileUrl(::prost::alloc::string::String),
     }
 }
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
@@ -114,6 +123,7 @@ pub struct ToggleMessageFavoriteRequest {
 }
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ToggleMessageFavoriteResponse {
+    /// Новое состояние.
     #[prost(bool, tag = "1")]
     pub is_favorite: bool,
 }
@@ -135,7 +145,7 @@ pub mod chat_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with ChatServiceServer.
     #[async_trait]
     pub trait ChatService: std::marker::Send + std::marker::Sync + 'static {
-        /// Session Management
+        /// Получить список чатов (с пагинацией и фильтрами).
         async fn list_chats(
             &self,
             request: tonic::Request<super::ListChatsRequest>,
@@ -143,6 +153,7 @@ pub mod chat_service_server {
             tonic::Response<super::ListChatsResponse>,
             tonic::Status,
         >;
+        /// Обновить настройки чата (название, режим ответа).
         async fn update_chat_thread(
             &self,
             request: tonic::Request<super::UpdateChatThreadRequest>,
@@ -150,6 +161,7 @@ pub mod chat_service_server {
             tonic::Response<super::super::super::types::chat::ChatThread>,
             tonic::Status,
         >;
+        /// Удалить чат (Soft delete или полная очистка).
         async fn delete_chat_thread(
             &self,
             request: tonic::Request<super::DeleteChatThreadRequest>,
@@ -157,6 +169,7 @@ pub mod chat_service_server {
             tonic::Response<super::DeleteChatThreadResponse>,
             tonic::Status,
         >;
+        /// Архивация / Разархивация чата.
         async fn archive_chat(
             &self,
             request: tonic::Request<super::ArchiveChatRequest>,
@@ -164,6 +177,7 @@ pub mod chat_service_server {
             tonic::Response<super::super::super::types::chat::ChatThread>,
             tonic::Status,
         >;
+        /// Закрепление / Открепление чата.
         async fn pin_chat(
             &self,
             request: tonic::Request<super::PinChatRequest>,
@@ -171,6 +185,7 @@ pub mod chat_service_server {
             tonic::Response<super::super::super::types::chat::ChatThread>,
             tonic::Status,
         >;
+        /// Изменение порядка закрепленных чатов (Drag & Drop).
         async fn reorder_pinned_chats(
             &self,
             request: tonic::Request<super::ReorderPinnedChatsRequest>,
@@ -178,7 +193,7 @@ pub mod chat_service_server {
             tonic::Response<super::ListChatsResponse>,
             tonic::Status,
         >;
-        /// Messaging
+        /// Получить историю сообщений чата.
         async fn get_history(
             &self,
             request: tonic::Request<super::GetHistoryRequest>,
@@ -186,6 +201,7 @@ pub mod chat_service_server {
             tonic::Response<super::GetHistoryResponse>,
             tonic::Status,
         >;
+        /// Отправить сообщение боту.
         async fn send_message(
             &self,
             request: tonic::Request<super::SendMessageRequest>,
@@ -193,6 +209,7 @@ pub mod chat_service_server {
             tonic::Response<super::super::super::types::chat::Message>,
             tonic::Status,
         >;
+        /// Добавить/Убрать сообщение из избранного.
         async fn toggle_message_favorite(
             &self,
             request: tonic::Request<super::ToggleMessageFavoriteRequest>,
@@ -209,7 +226,7 @@ pub mod chat_service_server {
             >
             + std::marker::Send
             + 'static;
-        /// Real-time Stream
+        /// Подписка на события чата (Тайпинг, Новые сообщения, Ошибки).
         async fn subscribe_to_events(
             &self,
             request: tonic::Request<super::SubscribeToEventsRequest>,
@@ -218,6 +235,7 @@ pub mod chat_service_server {
             tonic::Status,
         >;
     }
+    /// Сервис Чата (Клиентский API).
     #[derive(Debug)]
     pub struct ChatServiceServer<T> {
         inner: Arc<T>,

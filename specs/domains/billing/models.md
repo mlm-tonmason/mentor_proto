@@ -2,8 +2,26 @@
 
 ## Модели
 
+### Transaction (Транзакция)
+Финансовая операция, отражающая движение средств или изменение баланса.
+* **id** (uuid): Уникальный ID транзакции.
+* **userId** (uuid): Пользователь.
+* **type** (enum):
+    * `DEPOSIT`: Пополнение баланса.
+    * `PURCHASE`: Покупка (подписки, товара).
+    * `REFUND`: Возврат средств.
+    * `REWARD`: Начисление бонусов (MLM, рефералка).
+* **status** (enum): `PENDING`, `COMPLETED`, `FAILED`.
+* **amount** (string): Сумма (абсолютное значение).
+* **currencyId** (u32): Валюта.
+* **direction** (enum): `INCOMING` (+), `OUTGOING` (-).
+* **createdAt** (timestamp): Время создания.
+* **completedAt** (timestamp, optional): Время завершения.
+* **referenceId** (string, optional): Ссылка на внешний объект (ID подписки, Plan ID).
+* **externalTxId** (string, optional): ID транзакции в платежном шлюзе (TON hash, Stripe ID).
+
 ### PricingPlan (Тарифный План)
-Тарифный план подписки на Аватара (или группу).
+Тарифный план подписки на Бота (или группу).
 * **id** (u32): ID плана.
 * **creatorId** (u32): Автор пакета (Пользователь или Компания).
 * **status** (enum): Жизненный цикл плана.
@@ -35,7 +53,7 @@
 Активная подписка пользователя.
 * **id** (uuid): ID подписки.
 * **userId** (uuid): Пользователь.
-* **botId** (uuid): Аватар (опционально, если подписка на конкретного).
+* **botId** (uuid): Бот (опционально, если подписка на конкретного).
 * **planId** (uuid): Купленный тарифный план `PricingPlan`.
 * **status** (enum): ACTIVE (активна), CANCELLED (дорабатывает период), EXPIRED (истекла).
 * **paymentType** (enum):
@@ -70,12 +88,6 @@
     * `used` (int): Использовано успешно.
     * `reserved` (int): Забронировано (в процессе генерации/звонка).
         * *Важно*: `available = limitPerCycle + rollover - used - reserved`.
-* **state**: Текущее состояние (в рамках текущего цикла).
-    * `currentCycleStart` (timestamp): Начало текущего периода (сегодня 00:00).
-    * `currentCycleEnd` (timestamp): Конец текущего периода (сегодня 23:59).
-    * `used` (int): Использовано успешно.
-    * `reserved` (int): Забронировано (в процессе генерации/звонка).
-        * *Важно*: `available = limitPerCycle - used - reserved`.
 * **features**:
     * **Burn logic**: Неиспользованные за цикл единицы сгорают.
     * **Sharing**: Несколько ботов могут ссылаться на одну `QuotaId` и потреблять общий пул.

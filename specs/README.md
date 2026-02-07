@@ -10,7 +10,7 @@
 | Домен | Описание | Содержание |
 |--------|-------------|---------|
 | **[Идентификация (Identity)](domains/identity/models.md)** | Пользователи, Аутентификация, Настройки | [Модели](domains/identity/models.md), [Потоки](domains/identity/flows.md) |
-| **[Бот (Bot)](domains/bot/models.md)** | Аватары, Каталог, Маркетплейс | [Модели](domains/bot/models.md), [Потоки](domains/bot/flows.md) |
+| **[Bot (Bot)](domains/bot/models.md)** | Боты, Каталог, Маркетплейс | [Модели](domains/bot/models.md), [Потоки](domains/bot/flows.md) |
 | **[Чат (Chat)](domains/chat/models.md)** | Сообщения, Сессии, Realtime | [Модели](domains/chat/models.md), [Потоки](domains/chat/flows.md) |
 | **[Биллинг (Billing)](domains/billing/models.md)** | Подписки, Квоты, Тарифы | [Модели](domains/billing/models.md), [Потоки](domains/billing/flows.md) |
 | **[Память (Memory)](domains/memory/models.md)** | ИИ схемы, Контекст профиля пользователя | [Модели](domains/memory/models.md), [Потоки](domains/memory/flows.md) |

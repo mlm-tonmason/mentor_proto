@@ -2,58 +2,46 @@ syntax = "proto3";
 
 package mentor.client.memory;
 
-option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/client/memory";
-
 import "mentor/types/memory.proto";
-import "mentor/types/chat.proto";
+import "google/protobuf/struct.proto";
 
-// Сервис управления памятью и профилем пользователя у аватаров.
+// Сервис управления памятью и настройками Бота (RAG).
 service MemoryService {
-    // Получить память взаимодействия с ботом.
-    rpc GetAvatarMemory(GetAvatarMemoryRequest) returns (GetAvatarMemoryResponse);
+  // --- Структурированная Память (Факты) ---
 
-    // Обновить память (клиентские данные).
-    rpc UpdateAvatarMemory(UpdateAvatarMemoryRequest) returns (UpdateAvatarMemoryResponse);
+  // Получить "факты", которые бот знает о пользователе.
+  rpc GetMemory(GetMemoryRequest) returns (mentor.types.memory.BotUserMemory);
 
-    // Сбросить память бота ("Забыть меня").
-    rpc ResetAvatarMemory(ResetAvatarMemoryRequest) returns (ResetAvatarMemoryResponse);
+  // Обновить/Дополнить память (обычно делает сам бот, но доступно и клиенту).
+  rpc UpdateMemory(UpdateMemoryRequest) returns (mentor.types.memory.BotUserMemory);
 
-    // Получить саммари диалогов.
-    rpc ListDialogueSummaries(ListDialogueSummariesRequest) returns (ListDialogueSummariesResponse);
+  // --- Плоские Настройки (KV) ---
+
+  // Получить настройки "Ключ-Значение".
+  rpc GetKVMemory(GetKVMemoryRequest) returns (mentor.types.memory.BotUserKVMemory);
+
+  // Обновить настройки (например, user_theme="dark").
+  rpc UpdateKVMemory(UpdateKVMemoryRequest) returns (mentor.types.memory.BotUserKVMemory);
 }
 
-message GetAvatarMemoryRequest {
-    string bot_id = 1;
+// --- Запросы ---
+
+message GetMemoryRequest {
+  uint32 bot_id = 1;
 }
 
-message GetAvatarMemoryResponse {
-    mentor.types.AvatarUserMemory memory = 1;
+message UpdateMemoryRequest {
+  uint32 bot_id = 1;
+  // Данные для слияния (Merge) или замены.
+  google.protobuf.Struct data = 2; 
 }
 
-message UpdateAvatarMemoryRequest {
-    string bot_id = 1;
-    mentor.types.AvatarUserMemory memory = 2;
+message GetKVMemoryRequest {
+  uint32 bot_id = 1;
 }
 
-message UpdateAvatarMemoryResponse {
-    mentor.types.AvatarUserMemory memory = 1;
-}
-
-message ResetAvatarMemoryRequest {
-    string bot_id = 1;
-}
-
-message ResetAvatarMemoryResponse {
-    bool success = 1;
-}
-
-message ListDialogueSummariesRequest {
-    string bot_id = 1;
-    int32 page_size = 2;
-    string page_token = 3;
-}
-
-message ListDialogueSummariesResponse {
-    repeated mentor.types.DialogueSummary items = 1;
-    string next_page_token = 2;
+message UpdateKVMemoryRequest {
+  uint32 bot_id = 1;
+  // Карта ключей для обновления (существующие перезапишутся, новые добавятся).
+  map<string, string> items = 2; 
 }

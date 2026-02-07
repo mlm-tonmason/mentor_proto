@@ -5,96 +5,99 @@ package mentor.types.identity;
 import "google/protobuf/timestamp.proto";
 import "mentor/types/common.proto";
 
-// --- Enums ---
+// --- Перечисления (Enums) ---
 
+// Тема интерфейса.
 enum Theme {
-  THEME_UNSPECIFIED = 0;
-  THEME_LIGHT = 1;
-  THEME_DARK = 2;
-  THEME_SYSTEM = 3;
+  THEME_UNSPECIFIED = 0; // Не указана
+  THEME_LIGHT = 1;       // Светлая
+  THEME_DARK = 2;        // Темная
+  THEME_SYSTEM = 3;      // Как в системе
 }
 
-// --- Models ---
+// --- Модели ---
 
-// User (Internal Platform User)
+// Пользователь (Внутренний аккаунт Mentor).
 message User {
-  // Unique User ID (UUID string)
+  // Уникальный ID пользователя (UUID строка).
   string id = 1;
 
-  // External network ID (SSO, e.g. from Telegram)
+  // Внешний ID (SSO, например Telegram User ID).
   string network_user_id = 9;
 
-  // User Settings
+  // Настройки пользователя.
   UserSettings settings = 2;
 
   google.protobuf.Timestamp created_at = 3;
   google.protobuf.Timestamp updated_at = 4;
+  google.protobuf.Timestamp last_active_at = 5; // Поле для аналитики Retention (добавлено по совету Spec Architect)
 }
 
-// User-specific adjustable settings
+// Пользовательские настройки.
 message UserSettings {
-  // Interface language code (en, ru)
+  // Язык интерфейса (en, ru).
   string interface_language = 1;
 
-  // UI Theme preference
+  // Тема оформления.
   Theme theme = 2;
 
-  // Heavy animations toggle (true = enabled)
+  // Тяжелые анимации (true = включены).
   bool animations_enabled = 3;
 }
 
-// Rich User Profile (Aggregated API Response)
+// Обогащенный профиль пользователя (составной ответ API).
 message UserProfile {
-  // Core user data
+  // Локальные данные (БД Mentor).
   User user = 1;
 
-  // Data from external network (Real-time sync)
+  // Данные из внешней системы (Real-time sync).
   NetworkData network_data = 2;
 }
 
-// External Network Data (e.g. from Telegram/TON)
+// Данные из внешней сети (SPOF: Single Point of Truth in Network).
 message NetworkData {
   string username = 1;
-  string avatar_url = 2;
+  string avatar_url = 2; // NFT аватарка
 
-  // Multi-currency wallet balances
+  // Мультивалютный кошелек.
   repeated BalanceItem balances = 3;
 
-  // Link to deposit page
+  // Ссылка на пополнение.
   string deposit_url = 4;
 }
 
-// Atomic balance item
+// Элемент баланса.
 message BalanceItem {
-  // Balance amount as string ("10.500")
+  // Сумма ("10.500").
   string amount = 1;
 
-  // Code/ID of the currency
+  // ID валюты.
   uint32 currency_id = 2;
 }
 
-// Currency definition
+// Валюта (Справочник).
 message Currency {
   uint32 id = 1;
-  string code = 2; // TON, USDT, POINTS
-  string display_name = 3;
-  string symbol = 4; // $, 💎
-  int32 decimals = 5;
+  string code = 2;         // TON, USDT, POINTS
+  string display_name = 3; // Например, "Toncoin"
+  string symbol = 4;       // $, 💎
+  int32 decimals = 5;      // Кол-во знаков после запятой (9 для TON)
 }
 
-// Exchange Rate Pair
+// Валютная пара (Курс обмена).
 message ExchangePair {
-  string base_currency = 1; // e.g. USD
-  string quote_currency = 2; // e.g. TON
-  string rate = 3; // "0.5" (how much quote for 1 base)
+  string base_currency = 1;  // USD (товар)
+  string quote_currency = 2; // TON (оплата)
+  string rate = 3;           // "0.5" (сколько quote за 1 base)
 }
 
-// System Configuration
+// Системная конфигурация.
 message SystemConfig {
   repeated Locale supported_locales = 1;
 }
 
+// Локаль.
 message Locale {
-  string code = 1;
-  string display_name = 2;
+  string code = 1;         // 'ru'
+  string display_name = 2; // 'Русский'
 }

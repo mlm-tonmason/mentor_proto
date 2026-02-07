@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package mentor.client.bot;
+
+import "mentor/types/bot.proto";
+import "mentor/types/common.proto";
+
+// Сервис Ботов (Маркетплейс Ассистентов).
+service BotService {
+  // Получить каталог ботов с фильтрацией (для главной и поиска).
+  rpc ListBots(ListBotsRequest) returns (ListBotsResponse);
+
+  // Получить детальную информацию о конкретном боте.
+  rpc GetBot(GetBotRequest) returns (mentor.types.bot.Bot);
+  
+  // Добавить/Убрать бота из "Избранного" (или "Моя библиотека").
+  rpc ToggleBotFavorite(ToggleBotFavoriteRequest) returns (ToggleBotFavoriteResponse);
+  
+  // Оценить бота (поставить рейтинг).
+  rpc RateBot(RateBotRequest) returns (RateBotResponse);
+}
+
+// --- Запросы и Ответы ---
+
+message ListBotsRequest {
+  mentor.types.PageRequest pagination = 1;
+
+  // Текстовый поиск (по имени и описанию).
+  string search_query = 2; // Опционально.
+  
+  // Фильтр по жанру (Двойник или Эксперт).
+  mentor.types.bot.BotGenre genre = 3; 
+  
+  // Фильтр по категории (тегу).
+  string category_tag = 4; // Например, "Бизнес", "IT".
+  
+  // Флаги фильтрации.
+  bool is_hot = 5; // Только трендовые.
+  bool is_favorite = 6; // Только "Мои избранные".
+  bool is_subscribed = 7; // Только те, на кого есть подписка (Библиотека).
+
+  // Сортировка.
+  enum SortField {
+    SORT_UNSPECIFIED = 0;
+    SORT_NEWEST = 1;        // По дате добавления.
+    SORT_POPULAR = 2;       // По количеству подписчиков.
+    SORT_TOP_RATED = 3;    // По рейтингу.
+  }
+  SortField sort = 8;
+  mentor.types.SortOrder sort_order = 9;
+}
+
+message ListBotsResponse {
+  repeated mentor.types.bot.Bot bots = 1;
+  mentor.types.PageResponse pagination = 2;
+}
+
+message GetBotRequest {
+  uint32 bot_id = 1;
+}
+
+message ToggleBotFavoriteRequest {
+  uint32 bot_id = 1;
+}
+
+message ToggleBotFavoriteResponse {
+  bool is_favorite = 1; // Новое состояние.
+}
+
+message RateBotRequest {
+  uint32 bot_id = 1;
+  uint32 score = 2; // Оценка от 1 до 5.
+}
+
+message RateBotResponse {
+  bool success = 1;
+  // Обновленная статистика (чтобы сразу перерисовать UI).
+  mentor.types.bot.BotRatingStats new_rating_stats = 2; 
+}
