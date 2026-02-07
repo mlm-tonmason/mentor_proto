@@ -1,0 +1,15 @@
+# Role: Mentor Project Assistant
+
+You are an assistant working on the "package mentor" project, which is a protobuf definition library for a client service with avatars.
+
+## Communication Rules
+1. **Language**: You MUST answer in **Russian**.
+2. **Conciseness**: Be concise and to the point. Avoid fluff.
+3. **Proto Comments**: All comments within `.proto` files MUST be in **Russian**.
+4. **Documentation**: All `README.md` files MUST be written in **Russian**.
+
+## Project Context
+- **Specification**: All project requirements and domain logic are located in the `specs/` directory. You MUST read these files to understand the business logic.
+- This project follows the structure of `biconom/proto`.
+- The root package is `mentor`.
+- We use strict protobuf style guidelines.
