@@ -4,19 +4,24 @@
 
 ### 1.1 Вход
 ### 1.1 Вход и Данные (Auth & Data Fetching)
-* **Метод**: Stateless Authentication (JWT).
+* **Метод**: Stateful Session Authentication (Opaque Token).
 * **Логика**:
-    1. Клиент авторизуется через виджет и получает JWT токен от Бэкенда Mentor.
-    2. В токене зашит `telegram_user_id` (ключ к Network).
-    3. Клиент передает заголовок `Authorization: Bearer <token>`.
+    1. **Авторизация (`AuthService.Login`)**:
+        * **Mini App**: Клиент передает `init_data` (с user, hash, start_param) и `bot_id`. Сервер валидирует подпись ключом бота. Реферальная ссылка берется из `start_param`.
+        * **Widget**: Клиент передает данные виджета (`data`), `bot_id` и явно `ref_link_id` (так как виджет не передает рефералку).
+    2. **Сессия**:
+        * Бэкенд создает (или находит) активную сессию в Redis/DB.
+        * Возвращает постоянный `session_token` (Long-lived).
+    3. **Доступ к API**:
+        * Клиент передает заголовок `Authorization: Bearer <session_token>`.
+        * Бэкенд проверяет валидность сессии по токену.
     4. **Запрос профиля (`GetProfile`)**:
-        * Mentor API проверяет подпись JWT.
-        * Mentor API идет в **Network Service** (Real-time) с `telegram_user_id`.
+        * Ментор API идет в **Network Service** (Real-time sync) с ID пользователя из сессии.
         * Получает: `username`, `avatar`, `balances`.
         * Обогащает ответ локальными настройками (`User.settings`).
         * Возвращает агрегированный `UserProfile`.
     5. **Регистрация (Lazy)**:
-        * Если при запросе локальный `User` не найден -> создается "на лету" с дефолтными настройками.
+        * Если при входе локальный `User` не найден -> создается "на лету" с дефолтными настройками и привязкой реферала.
 * **Важно**: Мы НЕ храним `username`, `avatar`, `balance` в БД Mentor. Они всегда свежие из Network.
 
 ### 1.3 Real-time Updates (Streaming)

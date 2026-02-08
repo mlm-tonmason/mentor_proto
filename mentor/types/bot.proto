@@ -3,42 +3,43 @@ syntax = "proto3";
 package mentor.types.bot;
 
 import "mentor/types/common.proto";
+import "mentor/types/identity.proto";
 import "google/protobuf/timestamp.proto";
-
-// --- Перечисления (Enums) ---
-
-// Жанр бота (Классификация).
-enum BotGenre {
-  BOT_GENRE_UNSPECIFIED = 0; // Не указан
-  BOT_GENRE_TWIN = 1;        // Двойник (создан пользователем)
-  BOT_GENRE_EXPERT = 2;      // Эксперт (создан компанией)
-}
-
-// Тип создателя.
-enum CreatorType {
-  CREATOR_TYPE_UNSPECIFIED = 0; // Не указан
-  CREATOR_TYPE_USER = 1;        // Пользователь
-  CREATOR_TYPE_COMPANY = 2;     // Компания
-}
-
-// Статус жизненного цикла бота.
-enum BotStatus {
-  BOT_STATUS_UNSPECIFIED = 0; // Не указан
-  BOT_STATUS_DRAFT = 1;       // Черновик
-  BOT_STATUS_MODERATION = 2;  // На модерации
-  BOT_STATUS_PUBLISHED = 3;   // Опубликован (в каталоге)
-  BOT_STATUS_ARCHIVED = 4;    // В архиве (удален автором)
-  BOT_STATUS_BLOCKED = 5;     // Заблокирован администрацией
-}
-
-// --- Модели ---
 
 // Сущность Бот (Эксперт или Двойник).
 message Bot {
-  uint32 id = 1;
+  message Id {
+    uint32 id = 1;
+  }
+  message Ids {
+    repeated uint32 ids = 1;
+  }
+  message List {
+    repeated Bot items = 1;
+  }
+  // Жанр бота (Классификация).
+  message Genre {
+    enum Id {
+      UNSPECIFIED = 0; // Не указан
+      TWIN = 1;        // Двойник (создан пользователем)
+      EXPERT = 2;      // Эксперт (создан компанией)
+    }
+    Id id = 1;
+  }
+  // Статус жизненного цикла бота.
+  message Status {
+    enum Id {
+      UNSPECIFIED = 0; // Не указан
+      DRAFT = 1;       // Черновик
+      MODERATION = 2;  // На модерации
+      PUBLISHED = 3;   // Опубликован (в каталоге)
+      ARCHIVED = 4;    // В архиве (удален автором)
+      BLOCKED = 5;     // Заблокирован администрацией
+    }
+    Id id = 1;
+  }
   
-  // Внешний ID (Provider).
-  string provider_bot_id = 9;
+  uint32 id = 1;
 
   // Идентификация.
   string system_name = 2; // Уникальный хендл (@handle).
@@ -50,57 +51,22 @@ message Bot {
   string long_description = 6;  // Полное (для детальной страницы).
 
   // Инфо о создателе.
-  CreatorInfo creator = 7;
+  mentor.types.identity.PublicUserProfile creator = 7;
   
   // Классификация.
-  BotGenre genre = 8;
-  repeated string tags = 10; // Теги категорий.
+  Genre.Id genre = 8;
+  repeated string tags = 9; // Теги категорий.
 
   // Статус и статистика.
-  BotStatus status = 20;
+  Status.Id status = 10;
   
-  bool is_expert = 11;   // Знак качества (эксперт).
-  bool is_hot = 12;      // Трендовый.
+  bool is_hot = 11;      // Трендовый.
+  bool is_archived = 12; // В архиве (контекстно).
   bool is_favorite = 13; // В избранном (контекстно).
   bool is_subscribed = 14; // Есть активная подписка (контекстно).
 
-  BotRatingStats rating = 15;
-  uint32 subscribers_count = 16; // Кол-во активных подписчиков.
+  mentor.types.Rating rating = 15;
 
-  // Настройки голоса.
-  VoiceOptions voice_options = 17;
-
-  // Версионирование.
-  google.protobuf.Timestamp updated_at = 18;
-  uint32 version = 19;
-}
-
-// Информация об авторе бота.
-message CreatorInfo {
-  string id = 1; // ID пользователя (UUID) или компании (u32 -> string).
-  CreatorType type = 2;
-  string name = 3; // Отображаемое имя автора.
-}
-
-// Статистика рейтинга.
-message BotRatingStats {
-  float average = 1; // Средняя оценка (1.0 - 5.0).
-  uint32 count = 2;  // Общее количество голосов.
-  
-  // Распределение оценок: звезда (1-5) -> количество голосов.
-  map<uint32, uint32> distribution = 3;
-}
-
-// Опции голоса.
-message VoiceOptions {
-  repeated string allowed_voice_ids = 1; // Список доступных голосов.
-  string default_voice_id = 2;           // Голос по умолчанию.
-}
-
-// Действие оценки бота пользователем.
-message BotRating {
-  uint32 bot_id = 1;
-  string user_id = 2; // UUID
-  uint32 score = 3;   // Оценка (1-5).
-  google.protobuf.Timestamp created_at = 4;
+  uint32 version = 16;
+  google.protobuf.Timestamp updated_at = 17;
 }

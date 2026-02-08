@@ -2,102 +2,100 @@ syntax = "proto3";
 
 package mentor.types.identity;
 
-import "google/protobuf/timestamp.proto";
 import "mentor/types/common.proto";
-
-// --- Перечисления (Enums) ---
-
-// Тема интерфейса.
-enum Theme {
-  THEME_UNSPECIFIED = 0; // Не указана
-  THEME_LIGHT = 1;       // Светлая
-  THEME_DARK = 2;        // Темная
-  THEME_SYSTEM = 3;      // Как в системе
-}
-
-// --- Модели ---
-
-// Пользователь (Внутренний аккаунт Mentor).
-message User {
-  // Уникальный ID пользователя (UUID строка).
-  string id = 1;
-
-  // Внешний ID (SSO, например Telegram User ID).
-  string network_user_id = 9;
-
-  // Настройки пользователя.
-  UserSettings settings = 2;
-
-  google.protobuf.Timestamp created_at = 3;
-  google.protobuf.Timestamp updated_at = 4;
-  google.protobuf.Timestamp last_active_at = 5; // Поле для аналитики Retention (добавлено по совету Spec Architect)
-}
-
-// Пользовательские настройки.
-message UserSettings {
-  // Язык интерфейса (en, ru).
-  string interface_language = 1;
-
-  // Тема оформления.
-  Theme theme = 2;
-
-  // Тяжелые анимации (true = включены).
-  bool animations_enabled = 3;
-}
+import "google/protobuf/timestamp.proto";
 
 // Обогащенный профиль пользователя (составной ответ API).
 message UserProfile {
-  // Локальные данные (БД Mentor).
-  User user = 1;
-
   // Данные из внешней системы (Real-time sync).
-  NetworkData network_data = 2;
-}
+  PublicUserProfile public_profile = 1;
 
-// Данные из внешней сети (SPOF: Single Point of Truth in Network).
-message NetworkData {
-  string username = 1;
-  string avatar_url = 2; // NFT аватарка
+  // Язык коммуникации с ботами (en, ru).
+  Locale interface_language = 2;
 
   // Мультивалютный кошелек.
-  repeated BalanceItem balances = 3;
-
-  // Ссылка на пополнение.
-  string deposit_url = 4;
+  repeated mentor.types.Money balances = 3;
 }
 
-// Элемент баланса.
-message BalanceItem {
-  // Сумма ("10.500").
-  string amount = 1;
+// Публичный профиль пользователя.
+message PublicUserProfile {
+  uint32 distributor_id = 1;    // ID пригласителя (u32).
+  string distributor_login = 2; // Логин пригласителя.
+  string referral_link = 3;     // Реферальная ссылка самого пользователя.
 
-  // ID валюты.
-  uint32 currency_id = 2;
+  // Telegram ID.
+  int64 telegram_id = 4; 
+  string telegram_username = 5; // "durov"
+
+  string first_name = 6;
+  string last_name = 7;
+  string avatar_url = 8; // Аватарка.
+  
+  google.protobuf.Timestamp created_at = 9;
+}
+
+// Локаль - поддерживаемый язык.
+message Locale {
+  message Id {
+      string code = 1; // "ru", "en"
+  }
+  
+  string code = 1; // "ru", "en"
+  string display_name = 2; // "Русский"
 }
 
 // Валюта (Справочник).
 message Currency {
-  uint32 id = 1;
-  string code = 2;         // TON, USDT, POINTS
-  string display_name = 3; // Например, "Toncoin"
-  string symbol = 4;       // $, 💎
-  int32 decimals = 5;      // Кол-во знаков после запятой (9 для TON)
+  message Id {
+    string code = 1; // "TON"
+  }
+  
+  string code = 1;         // TON, USDT
+  string display_name = 2; // "Toncoin"
+  string symbol = 3;       // $, 💎
+  int32 decimals = 4;      // Кол-во знаков после запятой (9 для TON)
 }
 
-// Валютная пара (Курс обмена).
+// Валютная пара (Конфигурация).
+// Определяет, какие пары доступны для обмена/отображения.
 message ExchangePair {
-  string base_currency = 1;  // USD (товар)
-  string quote_currency = 2; // TON (оплата)
-  string rate = 3;           // "0.5" (сколько quote за 1 base)
+  message Id {
+      string pair_id = 1; // "TON/USD"
+  }
+
+  // Список идентификаторов валютных пар.
+  // Используется в запросах на подписку.
+  message List {
+      repeated string pair_ids = 1;
+  }
+
+  string pair_id = 1; // "TON/USD"
+
+  string base_currency_code = 2;  // "TON" (Товар)
+  string quote_currency_code = 3; // "USD" (Цена)
+}
+
+// Текущий курс обмена (Real-time данные).
+message ExchangeRate {
+  string pair_id = 1; // "TON/USD"
+  
+  string buy_rate = 2;  // Курс покупки (сколько quote платим за 1 base) "5.50"
+  string sell_rate = 3; // Курс продажи (сколько quote получаем за 1 base) "5.45"
+  
+  google.protobuf.Timestamp updated_at = 4;
 }
 
 // Системная конфигурация.
+// Содержит все справочники необходимые для старта приложения.
 message SystemConfig {
-  repeated Locale supported_locales = 1;
-}
-
-// Локаль.
-message Locale {
-  string code = 1;         // 'ru'
-  string display_name = 2; // 'Русский'
+  repeated Locale locales = 1;
+  
+  // Доступные валюты (Справочник).
+  repeated Currency currencies = 2;
+  
+  // Доступные валютные пары.
+  repeated ExchangePair exchange_pairs = 3;
+  
+  // Актуальные курсы (Snapshot на момент запроса).
+  repeated ExchangeRate exchange_rates = 4;
 }

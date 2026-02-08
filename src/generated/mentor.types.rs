@@ -3,32 +3,12 @@
 /// Используется string для точного представления decimal.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Money {
-    /// Сумма в строковом формате (например, "10.50", "0.00000123").
-    #[prost(string, tag = "1")]
-    pub amount: ::prost::alloc::string::String,
     /// Уникальный идентификатор валюты (из справочника Currency).
-    #[prost(uint32, tag = "2")]
-    pub currency_id: u32,
-}
-/// Запрос с пагинацией.
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct PageRequest {
-    /// Количество элементов на странице (по умолчанию 20, макс 100).
-    #[prost(int32, tag = "1")]
-    pub page_size: i32,
-    /// Токен следующей страницы (получен из предыдущего ответа).
-    #[prost(string, tag = "2")]
-    pub page_token: ::prost::alloc::string::String,
-}
-/// Ответ с пагинацией.
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct PageResponse {
-    /// Токен для получения следующей страницы.
     #[prost(string, tag = "1")]
-    pub next_page_token: ::prost::alloc::string::String,
-    /// Общее количество элементов (опционально).
-    #[prost(int32, tag = "2")]
-    pub total_count: i32,
+    pub currency_code: ::prost::alloc::string::String,
+    /// Сумма в строковом формате (например, "10.50", "0.00000123").
+    #[prost(string, tag = "2")]
+    pub amount: ::prost::alloc::string::String,
 }
 /// Диапазон дат для фильтрации.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
@@ -40,36 +20,99 @@ pub struct DateRange {
     #[prost(message, optional, tag = "2")]
     pub to: ::core::option::Option<::prost_types::Timestamp>,
 }
-/// Направление сортировки.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum SortOrder {
-    /// Не указано
-    Unspecified = 0,
-    /// По возрастанию
-    Asc = 1,
-    /// По убыванию
-    Desc = 2,
+/// Курсор для пагинации (ID-based).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Cursor {
+    /// Последний известный идентификатор (курсор).
+    /// Если не указан (null/0), выборка начинается с начала или с конца списка
+    /// в зависимости от направления сортировки (sort_order).
+    #[prost(uint32, optional, tag = "1")]
+    pub last_id: ::core::option::Option<u32>,
+    /// Максимальное количество записей в ответе (Limit).
+    /// Если не указано, сервер использует значение по умолчанию (например, 20 или 50).
+    #[prost(uint32, optional, tag = "2")]
+    pub limit: ::core::option::Option<u32>,
+    /// Направление выборки (по умолчанию ASC/FORWARD).
+    #[prost(enumeration = "cursor::SortOrder", tag = "3")]
+    pub sort_order: i32,
+    /// Дополнительные фильтры (например, "bot_id": "123").
+    #[prost(map = "string, string", tag = "4")]
+    pub filters: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        ::prost::alloc::string::String,
+    >,
 }
-impl SortOrder {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::Unspecified => "SORT_ORDER_UNSPECIFIED",
-            Self::Asc => "SORT_ORDER_ASC",
-            Self::Desc => "SORT_ORDER_DESC",
+/// Nested message and enum types in `Cursor`.
+pub mod cursor {
+    /// Направление сортировки.
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration
+    )]
+    #[repr(i32)]
+    pub enum SortOrder {
+        /// Не указано
+        Unspecified = 0,
+        /// По возрастанию (Older first / Forward)
+        Asc = 1,
+        /// По убыванию (Newer first / Backward)
+        Desc = 2,
+    }
+    impl SortOrder {
+        /// String value of the enum field names used in the ProtoBuf definition.
+        ///
+        /// The values are not transformed in any way and thus are considered stable
+        /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+        pub fn as_str_name(&self) -> &'static str {
+            match self {
+                Self::Unspecified => "SORT_ORDER_UNSPECIFIED",
+                Self::Asc => "SORT_ORDER_ASC",
+                Self::Desc => "SORT_ORDER_DESC",
+            }
+        }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "SORT_ORDER_UNSPECIFIED" => Some(Self::Unspecified),
+                "SORT_ORDER_ASC" => Some(Self::Asc),
+                "SORT_ORDER_DESC" => Some(Self::Desc),
+                _ => None,
+            }
         }
     }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "SORT_ORDER_UNSPECIFIED" => Some(Self::Unspecified),
-            "SORT_ORDER_ASC" => Some(Self::Asc),
-            "SORT_ORDER_DESC" => Some(Self::Desc),
-            _ => None,
-        }
+}
+/// Статистика рейтинга.
+/// Используется для Ботов, Авторов и других оцениваемых сущностей.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Rating {
+    /// ID оцениваемой сущности.
+    #[prost(uint32, tag = "1")]
+    pub entity_id: u32,
+    /// Моя оценка (личный голос).
+    /// 0 или null — я не голосовал.
+    #[prost(uint32, tag = "2")]
+    pub my_score: u32,
+    /// Распределение оценок: звезда (1-5) -> количество голосов.
+    /// Фронтенд сам считает среднее и общее кол-во на основе этих данных.
+    #[prost(map = "uint32, uint32", tag = "3")]
+    pub distribution: ::std::collections::HashMap<u32, u32>,
+}
+/// Nested message and enum types in `Rating`.
+pub mod rating {
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct RateRequest {
+        /// ID оцениваемой сущности.
+        #[prost(uint32, tag = "1")]
+        pub entity_id: u32,
+        /// Оценка от 1 до 5.
+        #[prost(uint32, tag = "2")]
+        pub score: u32,
     }
 }

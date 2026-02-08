@@ -3,51 +3,58 @@ syntax = "proto3";
 package mentor.client.auth;
 
 import "mentor/types/identity.proto";
+import "google/protobuf/empty.proto";
 
 // Сервис Аутентификации (Управление сессиями).
 service AuthService {
-  // Вход через Telegram (Mini App / Widget).
+  // Вход в систему (Telegram Mini App, Widget и др.).
+  // Создает новую сессию или возвращает существующую.
   rpc Login(LoginRequest) returns (LoginResponse);
 
-  // Обновление токена доступа.
-  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
-
-  // Выход из системы.
-  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  // Завершение сессии (Выход).
+  // Деактивирует текущий токен (переданный в заголовке Authorization).
+  rpc Logout(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
-// Вход в систему.
+// Запрос на вход.
 message LoginRequest {
-  oneof credentials {
-    // Строка `initData` от Telegram WebApp.
-    string telegram_init_data = 1;
-    
-    // Для разработки: статический токен.
-    string dev_token = 2;
+  oneof method {
+    // Вход через Telegram Mini App (twa).
+    TelegramMiniAppAuth telegram_mini_app = 1;
+
+    // Вход через Telegram Widget (Login Widget).
+    TelegramWidgetAuth telegram_widget = 2;
   }
 }
 
+// Авторизация через Mini App (Web App).
+message TelegramMiniAppAuth {
+  // ID бота (Provider Bot ID), через которого открыт Mini App.
+  // Необходим серверу для выбора корректного Bot Token для проверки подписи.
+  string bot_id = 1;
+
+  // Строка `initData` (query string), полученная от TWA.
+  // Содержит user, auth_date, hash и start_param (ref).
+  string init_data = 2;
+}
+
+// Авторизация через Telegram Login Widget.
+message TelegramWidgetAuth {
+  // ID бота (Provider Bot ID), к которому привязан виджет.
+  string bot_id = 1;
+
+  // Данные авторизации от виджета (обычно JSON или query string с hash).
+  // Поля: id, first_name, username, photo_url, auth_date, hash.
+  string data = 2;
+
+  // Реферальная ссылка (опционально), так как виджет её не передает сам.
+  string ref_link_id = 3;
+}
+
 message LoginResponse {
-  string access_token = 1;  // JWT (Short-lived)
-  string refresh_token = 2; // JWT (Long-lived)
-  
-  // Профиль пользователя сразу при входе (оптимизация).
-  mentor.types.identity.UserProfile profile = 3;
-}
+  // Идентификатор сессии (Постоянный токен, пока не выйдет срок жизни сессии).
+  string session_token = 1;
 
-message RefreshTokenRequest {
-  string refresh_token = 1;
-}
-
-message RefreshTokenResponse {
-  string access_token = 1;
-  string refresh_token = 2; // Может обновляться (Rotation).
-}
-
-message LogoutRequest {
-  string refresh_token = 1;
-}
-
-message LogoutResponse {
-  bool success = 1;
+  // Профиль пользователя.
+  mentor.types.identity.UserProfile profile = 2;
 }

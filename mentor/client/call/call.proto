@@ -2,34 +2,26 @@ syntax = "proto3";
 
 package mentor.client.call;
 
-option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/client/call";
-
-import "mentor/types/call.proto";
-
 // Сервис звонков.
 service CallService {
-    // Начать звонок.
-    rpc StartCall(StartCallRequest) returns (StartCallResponse);
-
-    // Завершить звонок.
-    rpc EndCall(EndCallRequest) returns (EndCallResponse);
+    // Получить ссылку для создания голосового звонка (WebRTC/VAPI).
+    rpc GetCallLink(GetCallLinkRequest) returns (GetCallLinkResponse);
 }
 
-message StartCallRequest {
-    string bot_id = 1;
-    string thread_id = 2; // Привязка к чату
-    string voice_id = 3;  // Опционально: переопределение голоса
+// Запрос на получение ссылки для звонка.
+message GetCallLinkRequest {
+    // ID бота, с которым нужно созвониться.
+    uint32 bot_id = 1;
+    
+    // Дополнительные параметры звонка (например, thread_id, context, voice_override).
+    map<string, string> params = 2;
 }
 
-message StartCallResponse {
-    mentor.types.CallSession session = 1;
-    string streaming_url = 2; // URL для WebRTC/Streaming подключения
-}
+// Ответ со ссылкой.
+message GetCallLinkResponse {
+    // Сформированная ссылка для начала звонка.
+    string link = 1;
 
-message EndCallRequest {
-    string session_id = 1;
-}
-
-message EndCallResponse {
-    mentor.types.CallTranscript transcript = 1;
+    // Дополнительные метаданные (если нужны клиенту для настройки подключения).
+    map<string, string> metadata = 2;
 }

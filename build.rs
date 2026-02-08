@@ -19,9 +19,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "mentor/client/auth/auth.proto",
                 "mentor/client/identity/identity.proto",
                 "mentor/client/billing/billing.proto",
-                "mentor/client/bot/bot.proto",
                 "mentor/client/chat/chat.proto",
                 "mentor/client/memory/memory.proto",
+                "mentor/client/market/market.proto",
+                "mentor/client/call/call.proto",
                 "mentor/client/system/system.proto",
                 // Административные Сервисы (Admin Services)
                 // Пока не реализованы

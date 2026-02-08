@@ -2,139 +2,113 @@ syntax = "proto3";
 
 package mentor.client.chat;
 
+import "google/protobuf/empty.proto";
+import "mentor/types/bot.proto";
+import "mentor/types/billing.proto";
 import "mentor/types/chat.proto";
 import "mentor/types/common.proto";
+import "mentor/types/identity.proto";
 
 // Сервис Чата (Клиентский API).
 service ChatService {
-  // --- Управление Чатами (Сессиями) ---
+  // --- Управление Списком Ботов (Контакты) ---
 
-  // Получить список чатов (с пагинацией и фильтрами).
-  rpc ListChats(ListChatsRequest) returns (ListChatsResponse);
+  // Получить список ботов, с которыми есть активные диалоги (или закрепленные).
+  // Возвращает список ботов с метаданными (закреплен, порядок, последнее сообщение).
+  // Используется для отображения левого меню контактов.
+  rpc ListContactBots(google.protobuf.Empty) returns (ListContactBotsResponse);
 
-  // Обновить настройки чата (название, режим ответа).
-  rpc UpdateChatThread(UpdateChatThreadRequest) returns (mentor.types.chat.ChatThread);
+  // Закрепить бота в топе списка.
+  // Возвращает обновленный список ID закрепленных ботов.
+  rpc PinBot(mentor.types.bot.Bot.Id) returns (mentor.types.bot.Bot.Ids);
 
-  // Удалить чат (Soft delete или полная очистка).
-  rpc DeleteChatThread(DeleteChatThreadRequest) returns (DeleteChatThreadResponse);
-  
-  // Архивация / Разархивация чата.
-  rpc ArchiveChat(ArchiveChatRequest) returns (mentor.types.chat.ChatThread);
+  // Открепить бота.
+  // Возвращает обновленный список ID закрепленных ботов.
+  rpc UnpinBot(mentor.types.bot.Bot.Id) returns (mentor.types.bot.Bot.Ids);
 
-  // Закрепление / Открепление чата.
-  rpc PinChat(PinChatRequest) returns (mentor.types.chat.ChatThread);
+  // Изменить порядок закрепленных ботов.
+  // Принимает новый порядок ID. Возвращает подтвержденный порядок.
+  rpc ReorderPinnedBots(mentor.types.bot.Bot.Ids) returns (mentor.types.bot.Bot.Ids);
 
-  // Изменение порядка закрепленных чатов (Drag & Drop).
-  rpc ReorderPinnedChats(ReorderPinnedChatsRequest) returns (ListChatsResponse);
+  // --- Управление Диалогами (Тредами) ---
+
+  // Получить список диалогов в конкретном боте (с пагинацией).
+  // В запросе (mentor.types.Cursor) нужно передать bot_id в фильтрах, если это предусмотрено,
+  // или использовать отдельное поле, если Cursor не подходит.
+  // В текущей реализации mentor.types.Cursor содержит filters map<string, string>.
+  // Ожидается bot_id в фильтре курсора.
+  rpc ListChats(mentor.types.Cursor) returns (mentor.types.chat.ChatThread.List);
+
+  // Обновить название чата (пользовательское).
+  rpc UpdateChatTitle(UpdateChatTitleRequest) returns (mentor.types.chat.ChatThread);
+
+  // Обновить настройки чата (режим ответа, thinking mode).
+  rpc UpdateChatConfiguration(UpdateChatConfigurationRequest) returns (mentor.types.chat.ChatThread);
+
+  // Удалить диалог.
+  rpc DeleteChat(mentor.types.chat.ChatThread.Id) returns (google.protobuf.Empty);
 
   // --- Сообщения ---
 
-  // Получить историю сообщений чата.
-  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
+  // Получить историю сообщений (с пагинацией и поддержкой фильтра по избранным).
+  rpc GetHistory(GetHistoryRequest) returns (mentor.types.chat.Message.List);
 
-  // Отправить сообщение боту.
+  // Отправить сообщение.
   rpc SendMessage(SendMessageRequest) returns (mentor.types.chat.Message);
-
-  // Добавить/Убрать сообщение из избранного.
-  rpc ToggleMessageFavorite(ToggleMessageFavoriteRequest) returns (ToggleMessageFavoriteResponse);
+  
+  // Добавить сообщение в избранное.
+  rpc AddToFavorites(mentor.types.chat.Message.Id) returns (google.protobuf.Empty);
+  
+  // Удалить сообщение из избранного.
+  rpc RemoveFromFavorites(mentor.types.chat.Message.Id) returns (google.protobuf.Empty);
 
   // --- Real-time ---
-
-  // Подписка на события чата (Тайпинг, Новые сообщения, Ошибки).
-  rpc SubscribeToEvents(SubscribeToEventsRequest) returns (stream mentor.types.chat.ChatEvent);
+  
+  // Подписка на события (Тайпинг, Новые сообщения).
+  // Глобальный стрим для текущего пользователя (все боты, все чаты).
+  rpc SubscribeToEvents(google.protobuf.Empty) returns (stream mentor.types.chat.ChatEvent);
 }
 
 // --- Запросы и Ответы ---
 
-message ListChatsRequest {
-  mentor.types.PageRequest pagination = 1;
+message ListContactBotsResponse {
+  // Элемент списка контактов.
+  message Contact {
+    mentor.types.bot.Bot bot = 1;
+    mentor.types.billing.BotTariffPlan plan = 2; // Текущий тарифный план.
+    optional mentor.types.billing.BotSubscription subscription = 3; // Активная подписка.
+    mentor.types.identity.PublicUserProfile creator = 4; // Автор бота.
+    repeated mentor.types.chat.ChatThread chat_threads = 5; // Список чатов с пользователем и ботом.
+  }
+  repeated Contact contacts = 1;
 
-  // Фильтр по ID бота (опционально).
-  uint32 bot_id = 2; 
-  
-  // Только закрепленные.
-  bool only_pinned = 3;
-
-  // Статус архивации (false = активные, true = архивные).
-  // Если не указано (null), может возвращать все (зависит от логики, но обычно разделяют).
-  bool is_archived = 4; 
+  // Текущий порядок закрепленных ботов (список ID).
+  // Используется для сортировки на клиенте.
+  mentor.types.bot.Bot.Ids pin_order_bot_ids = 2;
 }
 
-message ListChatsResponse {
-  repeated mentor.types.chat.ChatThread threads = 1;
-  mentor.types.PageResponse pagination = 2;
-}
-
-message UpdateChatThreadRequest {
+message UpdateChatTitleRequest {
   uint32 thread_id = 1;
-  
-  // Поля для обновления (если указаны).
-  string title = 2; // Переименовать.
-  mentor.types.chat.ChatMode response_mode = 3; // Сменить режим (Текст/Голос).
-  bool sinking_mode_enabled = 4; // Включить/Выключить Sinking Mode.
+  string title = 2; // Новое название (если пустое не меняем).
 }
 
-message DeleteChatThreadRequest {
+message UpdateChatConfigurationRequest {
   uint32 thread_id = 1;
-}
-
-message DeleteChatThreadResponse {
-  bool success = 1;
-}
-
-message ArchiveChatRequest {
-  uint32 thread_id = 1;
-  bool archived = 2; // true = в архив, false = вернуть.
-}
-
-message PinChatRequest {
-  uint32 thread_id = 1;
-  bool pinned = 2; // true = закрепить, false = открепить.
-}
-
-message ReorderPinnedChatsRequest {
-  repeated uint32 thread_ids = 1; // Новый порядок ID.
+  mentor.types.chat.ChatThread.Configuration configuration = 2;
 }
 
 message GetHistoryRequest {
-  uint32 thread_id = 1;
-  mentor.types.PageRequest pagination = 2;
+  mentor.types.Cursor cursor = 1;
   
-  // Фильтр: только избранные.
-  bool only_favorites = 3;
-}
-
-message GetHistoryResponse {
-  repeated mentor.types.chat.Message messages = 1;
-  mentor.types.PageResponse pagination = 2;
+  // Фильтр: искать только избранные сообщения.
+  bool only_favorites = 2;
 }
 
 message SendMessageRequest {
   uint32 thread_id = 1;
   
-  // Контент сообщения (oneof).
-  // Упрощенная структура для отправки (клиент может слать текст или ссылку на медиа).
   oneof content {
-    string text = 2;
-    // Для отправки файлов, клиент сначала грузит их в S3 (через отдельный UploadService),
-    // а сюда присылает URL.
-    string audio_url = 3; 
-    string image_url = 4;
-    string file_url = 5;
+    string text = 2;      // Текстовое сообщение.
+    bytes audio_data = 3; // Голосовое сообщение (raw bytes / encoded).
   }
-  
-  // Локальный ID для идемпотентности (опционально).
-  string local_id = 6; 
-}
-
-message ToggleMessageFavoriteRequest {
-  string message_id = 1;
-}
-
-message ToggleMessageFavoriteResponse {
-  bool is_favorite = 1; // Новое состояние.
-}
-
-message SubscribeToEventsRequest {
-  uint32 thread_id = 1;
 }

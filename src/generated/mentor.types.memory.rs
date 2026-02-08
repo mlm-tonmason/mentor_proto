@@ -2,9 +2,9 @@
 /// Структурированная память Бота о Пользователе (Факты).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BotUserMemory {
-    /// UUID
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    /// ID Авторизованного пользователя (Плательщик/Дистрибьютор).
+    #[prost(uint32, tag = "1")]
+    pub distributor_id: u32,
     /// ID Бота
     #[prost(uint32, tag = "2")]
     pub bot_id: u32,
@@ -19,9 +19,9 @@ pub struct BotUserMemory {
 /// Инжектится в System Prompt: `USER_THEME=Dark`.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BotUserKvMemory {
-    /// UUID
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    /// ID Авторизованного пользователя.
+    #[prost(uint32, tag = "1")]
+    pub distributor_id: u32,
     #[prost(uint32, tag = "2")]
     pub bot_id: u32,
     /// Карта строковых значений.
@@ -30,16 +30,4 @@ pub struct BotUserKvMemory {
         ::prost::alloc::string::String,
         ::prost::alloc::string::String,
     >,
-}
-/// Краткое содержание диалога (Саммари).
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct DialogueSummary {
-    /// Ссылка на сессию
-    #[prost(uint32, tag = "1")]
-    pub dialogue_session_id: u32,
-    /// Текстовая выжимка ("Пользователь интересовался курсом TON...").
-    #[prost(string, tag = "2")]
-    pub content: ::prost::alloc::string::String,
-    #[prost(message, optional, tag = "3")]
-    pub created_at: ::core::option::Option<::prost_types::Timestamp>,
 }

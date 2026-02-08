@@ -2,175 +2,178 @@ syntax = "proto3";
 
 package mentor.types.billing;
 
+import "mentor/types/bot.proto";
 import "mentor/types/common.proto";
+import "mentor/types/identity.proto";
 import "google/protobuf/timestamp.proto";
 
-// --- Перечисления (Enums) ---
-
-// Статус тарифного плана.
-enum PricingPlanStatus {
-  PRICING_PLAN_STATUS_UNSPECIFIED = 0; // Не указан
-  PRICING_PLAN_STATUS_DRAFT = 1;       // Черновик (виден только автору)
-  PRICING_PLAN_STATUS_ACTIVE = 2;      // Активен (виден всем)
-  PRICING_PLAN_STATUS_ARCHIVED = 3;    // В архиве (доступен только старым подписчикам)
-}
-
-// Тип тарифного плана.
-enum PricingPlanType {
-  PRICING_PLAN_TYPE_UNSPECIFIED = 0;     // Не указан
-  PRICING_PLAN_TYPE_SUBSCRIPTION = 1;    // Подписка на контент (ботов)
-  PRICING_PLAN_TYPE_CREATOR_ACCESS = 2;  // Платная услуга для создателей
-}
-
-// Статус подписки.
-enum SubscriptionStatus {
-  SUBSCRIPTION_STATUS_UNSPECIFIED = 0; // Не указан
-  SUBSCRIPTION_STATUS_ACTIVE = 1;      // Активна
-  SUBSCRIPTION_STATUS_CANCELLED = 2;   // Отменена (действует до конца периода)
-  SUBSCRIPTION_STATUS_EXPIRED = 3;     // Истекла
-  SUBSCRIPTION_STATUS_SUSPENDED = 4;   // Приостановлена (ошибка оплаты)
-}
-
-// Тип оплаты.
-enum PaymentType {
-  PAYMENT_TYPE_UNSPECIFIED = 0; // Не указан
-  PAYMENT_TYPE_PREPAID = 1;     // Разовая оплата за весь период
-  PAYMENT_TYPE_RECURRING = 2;   // Рекуррентная подписка (ежемесячно)
-}
-
-// Статус транзакции.
-enum TransactionStatus {
-  TRANSACTION_STATUS_UNSPECIFIED = 0; // Не указан
-  TRANSACTION_STATUS_PENDING = 1;     // В ожидании
-  TRANSACTION_STATUS_COMPLETED = 2;   // Завершена успешно
-  TRANSACTION_STATUS_FAILED = 3;      // Ошибка
-}
-
-// Тип транзакции.
-enum TransactionType {
-  TRANSACTION_TYPE_UNSPECIFIED = 0; // Не указан
-  TRANSACTION_TYPE_DEPOSIT = 1;     // Пополнение
-  TRANSACTION_TYPE_PURCHASE = 2;    // Покупка
-  TRANSACTION_TYPE_REFUND = 3;      // Возврат
-  TRANSACTION_TYPE_REWARD = 4;      // Награда
-}
-
-// Направление транзакции.
-enum TransactionDirection {
-  TRANSACTION_DIRECTION_UNSPECIFIED = 0; // Не указано
-  TRANSACTION_DIRECTION_INCOMING = 1;    // Входящая (+)
-  TRANSACTION_DIRECTION_OUTGOING = 2;    // Исходящая (-)
-}
 
 // --- Модели ---
 
-// Тарифный План.
-message PricingPlan {
-  uint32 id = 1;
+// Тарифный план бота (публичная модель для отображения в каталоге).
+message BotTariffPlan {
+  // Идентификатор плана.
+  message Id {
+    uint32 plan_id = 1;
+  }
 
-  // ID создателя (Пользователь или Компания).
-  uint32 creator_id = 2;
-
-  PricingPlanStatus status = 3;
-  PricingPlanType type = 4;
-
-  // Цена ("10.00").
-  string price = 5;
-  uint32 currency_id = 6;
+  // Список тарифных планов.
+  message List {
+    repeated BotTariffPlan items = 1;
+  }
   
-  // Длительность в месяцах.
-  uint32 duration_months = 7;
+  // Статус тарифного плана.
+  message Status {
+    enum Id {
+      UNSPECIFIED = 0; // Не указан
+      DRAFT = 1;       // Черновик (виден только автору)
+      ACTIVE = 2;      // Активен (виден всем)
+      ARCHIVED = 3;    // В архиве (доступен только старым подписчикам)
+    }
+  }
 
-  // Дополнительные параметры (JSON map).
-  map<string, string> features = 8;
-  
-  // Правила квот, включенные в этот план.
-  repeated QuotaRule quota_rules = 9;
+  // Метрики квоты (лимиты ресурсов).
+  // Используется для описания того, что включает в себя конкретная группа квот.
+  message QuotaMetrics {
+    uint32 msg = 1;  // Количество текстовых сообщений.
+    uint32 call = 2; // Количество секунд звонков.
+  }
 
-  google.protobuf.Timestamp created_at = 10;
-  google.protobuf.Timestamp updated_at = 11;
+  uint32 plan_id = 1;   // Уникальный идентификатор тарифного плана.
+  uint32 creator_id = 2; // Идентификатор создателя (дистрибьютора), создавшего план.
+  Status.Id status = 3;   // Статус тарифного плана.
+
+  // Карта распределения ботов по группам квот.
+  // Ключ: ID бота (uint32).
+  // Значение: ID квоты (uint32), к которой бот привязан.
+  // Это позволяет понять, какие боты делят между собой общие ресурсы.
+  map<uint32, uint32> bot_quota = 4; 
+
+  // Описание самих квот.
+  // Ключ: ID квоты (uint32), на который ссылается bot_quota.
+  // Значение: Метрики (лимиты) этой квоты.
+  map<uint32, QuotaMetrics> day_quota_metrics = 5; 
+
+  mentor.types.Money month_price = 6; // Стоимость подписки за один месяц (в базовой валюте).
+  uint32 duration_months = 7;         // Общая длительность подписки в месяцах (срок действия контракта).
 }
 
-// Правило для расчета лимитов (Квота).
-message QuotaRule {
-  uint32 id = 1;
-  uint32 plan_id = 2;
+// Подписка на бота (экземпляр плана).
+message BotSubscription {
+  message Id {
+    uint32 id = 1; // Внутренний уникальный ID подписки в системе.
+  }
 
-  // Шаблон настроек лимита.
-  QuotaTemplate quota_template = 3;
+  // Статус подписки.
+  message Status {
+    enum Id {
+      UNSPECIFIED = 0; // Не указан
+      ACTIVE = 1;      // Активна
+      CANCELLED = 2;   // Отменена (действует до конца периода)
+      EXPIRED = 3;     // Истекла
+      SUSPENDED = 4;   // Приостановлена (ошибка оплаты)
+    }
+  }
 
-  // Список ID ботов, входящих в эту группу.
-  repeated uint32 included_bot_ids = 4;
-}
-
-// Шаблон настроек квоты.
-message QuotaTemplate {
-  // Тип ресурса (MESSAGE, CALL_MINUTES).
-  string resource_type = 1;
-
-  // Лимит на один цикл.
-  int32 limit_per_cycle = 2;
-
-  // Длительность цикла (ISO 8601 duration, например "P1D").
-  string cycle_duration = 3; 
-
-  // Лимит накопления остатков.
-  int32 rollover_limit = 4;
-}
-
-// Подписка пользователя.
-message Subscription {
-  string id = 1; // UUID
-  string user_id = 2; // UUID
+  uint32 id = 1;      // Внутренний уникальный ID подписки в системе.
+  uint32 nonce = 2;   // Порядковый номер подписки у дистрибьютора на данного создателя (для чеков/счетов).
+  uint32 creator_id = 3; // Идентификатор создателя контента (на кого подписались).
+  uint32 distributor_id = 4; // Идентификатор дистрибьютора, через которого прошла продажа (реферальная система).
   
-  // Ссылка на план.
-  uint32 plan_id = 3;
+  // Ссылка на тарифный план, по которому приобретена подписка.
+  uint32 plan_id = 5;
+  Status.Id status = 6;
+
+  // Использованные ресурсы за текущий период (Usage tracking).
+  message PeriodQuotaMetricsUsed {
+    BotTariffPlan.QuotaMetrics metrics = 1; // Сколько уже потрачено ресурсов.
+    mentor.types.DateRange period = 2; // Период действия квоты.
+  }
+
+  // Состояние расхода квот.
+  // Ключ: ID квоты (uint32) из BotTariffPlan.quota_metrics.
+  // Значение: Текущий прогресс использования и сроки периода.
+  map<uint32, PeriodQuotaMetricsUsed> period_quota_metrics_used = 7; 
+
+  // Временные метки времени жизни всей подписки.
+  mentor.types.DateRange total_period = 8; // Общий срок действия подписки.
   
-  // Краткая копия плана на момент покупки (историчность).
-  PricingPlan plan_snapshot = 4; 
-
-  // Опционально: Конкретный бот, на которого куплена подписка (если план Individual).
-  string bot_id = 11; // ID бота (если известно, что это один бот). Хотя bot_id у нас u32.
-  // Исправление: Bot ID у нас u32. Но в spec написано uuid. 
-  // Мы договорились использовать u32 для Bot ID.
-  uint32 bot_id_u32 = 12; 
-
-  SubscriptionStatus status = 5;
-  PaymentType payment_type = 6;
-
-  google.protobuf.Timestamp starts_at = 7;
-  google.protobuf.Timestamp expires_at = 8;
-
-  bool auto_renew = 9;
-  string total_price = 10; // Общая сумма контракта.
+  // Дата следующего автоматического приобретения/продления (если контракт предполагает это).
+  // Может отсутствовать, если это конец срока или автопродление невозможно.
+  optional google.protobuf.Timestamp next_renewal_at = 9;
 }
 
-// Агрегированные данные для дашборда подписок.
+// Данные для дашборда подписок клиента.
+// Агрегирует всю информацию о текущих подписках пользователя для отображения одним запросом.
 message SubscriptionDashboardData {
-  string total_monthly_payment = 1; 
-  int32 call_balance_seconds = 2;
-  repeated Subscription subscriptions = 3;
+  // Список профилей создателей (авторов), на которых есть активные или архивные подписки.
+  // Используется для отображения аватарок и имен в списке подписок.
+  repeated mentor.types.identity.PublicUserProfile creators = 1;
+
+  // Список актуальных тарифных планов, связанных с подписками.
+  // Необходим для отображения названий тарифов, лимитов и условий.
+  repeated BotTariffPlan bot_tariff_plans = 2;
+
+  // Список самих подписок пользователя.
+  repeated BotSubscription bot_subscriptions = 3;
+
+  // Список самих ботов, на которых есть подписки.
+  repeated mentor.types.bot.Bot bots = 4;
 }
 
 // Финансовая транзакция.
 message Transaction {
-  string id = 1; // UUID
-  string user_id = 2; // UUID
-  
-  TransactionType type = 3;
-  TransactionStatus status = 4;
-  
-  string amount = 5; // Абсолютное значение ("10.50")
-  uint32 currency_id = 6;
-  
-  TransactionDirection direction = 7;
-  
-  google.protobuf.Timestamp created_at = 8;
-  google.protobuf.Timestamp completed_at = 9;
+  message Id {
+    uint32 id = 1; 
+  }
 
-  // Ссылка на внешний объект (ID подписки и т.д.)
-  string reference_id = 10;
+  // Список транзакций (для возврата в API).
+  message List {
+    repeated Transaction items = 1;
+  }
   
-  // ID во внешней платежной системе.
-  string external_tx_id = 11;
+  // Статус транзакции.
+  message Status {
+    enum Id {
+      UNSPECIFIED = 0; // Не указан
+      PENDING = 1;     // В ожидании
+      COMPLETED = 2;   // Завершена успешно
+      FAILED = 3;      // Ошибка
+    }
+  }
+
+  // Метаданные транзакции (детали продукта/услуги).
+  message Metadata {
+    // Детали транзакции для подписки на бота.
+    message BotSubscriptionDetails {
+      uint32 bot_subscription_id = 1; // ID приобретенной/продленной подписки.
+
+      // Период, за который была оплата подписки (например, 01.01.2025 - 01.02.2025).
+      mentor.types.DateRange subscription_period = 2;
+    }
+    
+    // Детали транзакции (в зависимости от типа продукта).
+    // Позволяет добавлять новые типы покупок без изменения основной структуры Transaction.
+    oneof details {
+      BotSubscriptionDetails bot_subscription = 1; // Покупка подписки на бота.
+      // OtherProductDetails other_product = 2; // Будущие типы продуктов.
+    }
+  }
+
+  uint32 id = 1; // Глобальный уникальный ID транзакции.
+  uint32 distributor_id = 2; // ID пользователя (дистрибьютора), который совершил платеж.
+  
+  Status.Id status = 3; // Текущий статус транзакции (Pending, Completed, Failed).
+  Metadata metadata = 4; // Метаданные транзакции (что именно куплено).
+
+  // Сумма подписки в базовой валюте (обычно USD для отображения).
+  // Используется для статистики и отчетности.
+  mentor.types.Money amount_base = 5;
+  
+  // Сумма, фактически списанная в валюте оплаты (например, TON, USDT).
+  // Точная сумма транзакции в блокчейне или платежной системе.
+  mentor.types.Money amount_charged = 6;
+  
+  // Дата создания транзакции (UTC).
+  google.protobuf.Timestamp created_at = 7;
 }

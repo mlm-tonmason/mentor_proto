@@ -9,7 +9,7 @@ import "google/protobuf/struct.proto";
 
 // Структурированная память Бота о Пользователе (Факты).
 message BotUserMemory {
-  string user_id = 1; // UUID
+  uint32 distributor_id = 1; // ID Авторизованного пользователя (Плательщик/Дистрибьютор).
   uint32 bot_id = 2;  // ID Бота
 
   // Структурированные данные (например, { "name": "John", "hobbies": ["web3"] }).
@@ -22,19 +22,9 @@ message BotUserMemory {
 // Плоская память "Ключ-Значение" (Настройки/Флаги).
 // Инжектится в System Prompt: `USER_THEME=Dark`.
 message BotUserKVMemory {
-  string user_id = 1; // UUID
+  uint32 distributor_id = 1; // ID Авторизованного пользователя.
   uint32 bot_id = 2;
 
   // Карта строковых значений.
   map<string, string> items = 3; 
-}
-
-// Краткое содержание диалога (Саммари).
-message DialogueSummary {
-  uint32 dialogue_session_id = 1; // Ссылка на сессию
-
-  // Текстовая выжимка ("Пользователь интересовался курсом TON...").
-  string content = 2; 
-
-  google.protobuf.Timestamp created_at = 3;
 }

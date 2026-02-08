@@ -3,45 +3,22 @@ syntax = "proto3";
 package mentor.client.memory;
 
 import "mentor/types/memory.proto";
-import "google/protobuf/struct.proto";
+import "mentor/types/bot.proto";
 
 // Сервис управления памятью и настройками Бота (RAG).
 service MemoryService {
-  // --- Структурированная Память (Факты) ---
-
   // Получить "факты", которые бот знает о пользователе.
-  rpc GetMemory(GetMemoryRequest) returns (mentor.types.memory.BotUserMemory);
-
-  // Обновить/Дополнить память (обычно делает сам бот, но доступно и клиенту).
-  rpc UpdateMemory(UpdateMemoryRequest) returns (mentor.types.memory.BotUserMemory);
-
-  // --- Плоские Настройки (KV) ---
+  rpc GetMemory(mentor.types.bot.Bot.Id) returns (mentor.types.memory.BotUserMemory);
 
   // Получить настройки "Ключ-Значение".
-  rpc GetKVMemory(GetKVMemoryRequest) returns (mentor.types.memory.BotUserKVMemory);
+  rpc GetKVMemory(mentor.types.bot.Bot.Id) returns (mentor.types.memory.BotUserKVMemory);
 
-  // Обновить настройки (например, user_theme="dark").
+  // Сохранить произвольные данные "Ключ-Значение".
+  // (Простое хранилище: что передали, то и сохранили).
   rpc UpdateKVMemory(UpdateKVMemoryRequest) returns (mentor.types.memory.BotUserKVMemory);
-}
-
-// --- Запросы ---
-
-message GetMemoryRequest {
-  uint32 bot_id = 1;
-}
-
-message UpdateMemoryRequest {
-  uint32 bot_id = 1;
-  // Данные для слияния (Merge) или замены.
-  google.protobuf.Struct data = 2; 
-}
-
-message GetKVMemoryRequest {
-  uint32 bot_id = 1;
 }
 
 message UpdateKVMemoryRequest {
   uint32 bot_id = 1;
-  // Карта ключей для обновления (существующие перезапишутся, новые добавятся).
   map<string, string> items = 2; 
 }

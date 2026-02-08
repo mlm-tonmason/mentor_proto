@@ -2,78 +2,63 @@ syntax = "proto3";
 
 package mentor.client.market;
 
-option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/client/market";
-
-import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 import "mentor/types/bot.proto";
-import "mentor/types/billing.proto";
+import "mentor/types/common.proto";
 
-// Сервис каталога и подписок.
+// Сервис каталога и витрины ботов.
 service MarketService {
-    // Каталог ботов.
-    rpc ListBots(ListBotsRequest) returns (ListBotsResponse);
-    rpc GetBot(GetBotRequest) returns (GetBotResponse);
+    // --- Каталог и Поиск ---
 
-    // Избранное.
-    rpc AddToFavorites(AddToFavoritesRequest) returns (AddToFavoritesResponse);
-    rpc RemoveFromFavorites(RemoveFromFavoritesRequest) returns (RemoveFromFavoritesResponse);
+    // Получить детальную информацию о боте.
+    rpc GetBot(mentor.types.bot.Bot.Id) returns (mentor.types.bot.Bot);
 
-    // Библиотека (Боты с активной подпиской).
-    rpc ListMyLibrary(ListMyLibraryRequest) returns (ListMyLibraryResponse);
+    // Получить список ботов с фильтрацией и поиском.
+    // Используется для главной страницы, каталога и поисковой строки.
+    // Возвращает полный список подходящих ботов (без пагинации).
+    rpc SearchBots(SearchBotsRequest) returns (mentor.types.bot.Bot.List);
 
-    // Подписки и Лимиты.
-    rpc Subscribe(SubscribeRequest) returns (SubscribeResponse);
-    rpc GetQuotaDashboard(GetQuotaDashboardRequest) returns (GetQuotaDashboardResponse);
+    // --- Социальное взаимодействие ---
+
+    // Оценить бота (поставить рейтинг).
+    rpc RateBot(mentor.types.Rating.RateRequest) returns (mentor.types.Rating);
+
+    // Добавить бота в избранное.
+    rpc AddToFavorites(mentor.types.bot.Bot.Id) returns (google.protobuf.Empty);
+
+    // Удалить бота из избранного.
+    rpc RemoveFromFavorites(mentor.types.bot.Bot.Id) returns (google.protobuf.Empty);
+
+    // --- Библиотека пользователя ---
+
+    // Получить "Мою библиотеку" (Купленные + Избранные + Недавние).
+    // Возвращает список ботов, с которыми пользователь взаимодействовал:
+    // 1. Приобретенные (активная или архивная подписка).
+    // 2. Добавленные в избранное.
+    // 3. Недавно использованные (History).
+    rpc ListMyLibrary(google.protobuf.Empty) returns (mentor.types.bot.Bot.List);
 }
 
-message ListBotsRequest {
-    int32 page_size = 1;
-    string page_token = 2;
+// --- Запросы и Ответы ---
 
-    string category = 3;
-    bool is_expert = 4;
-    bool is_hot = 5;
-    bool is_favorite = 6;
-}
+message SearchBotsRequest {
+    // ID создателя (если 0, то не фильтровать).
+    uint32 creator_id = 1;
 
-message ListBotsResponse {
-    repeated mentor.types.Bot items = 1;
-    string next_page_token = 2;
-}
+    // Рейтинг.
+    fixed32 min_rating = 2;
+    
+    // Текстовый поиск (по имени, описанию, тегам).
+    string prefix_system_name = 3;
 
-message GetBotRequest { string bot_id = 1; }
-message GetBotResponse { mentor.types.Bot bot = 1; }
+    // Фильтр по жанру.
+    repeated mentor.types.bot.Bot.Genre.Id genre_ids = 4;
 
-message AddToFavoritesRequest { string bot_id = 1; }
-message AddToFavoritesResponse {}
+    // Фильтр по категории (строковый тег).
+    repeated string category_tags = 5;
 
-message RemoveFromFavoritesRequest { string bot_id = 1; }
-message RemoveFromFavoritesResponse {}
-
-message ListMyLibraryRequest {
-    int32 page_size = 1;
-    string page_token = 2;
-    bool only_favorites = 3;
-}
-
-message ListMyLibraryResponse {
-    repeated mentor.types.Bot items = 1;
-    string next_page_token = 2;
-}
-
-message SubscribeRequest {
-    string plan_id = 1;
-    mentor.types.Subscription.PaymentType.Id payment_type = 2;
-    bool auto_renew = 3;
-}
-
-message SubscribeResponse {
-    bool success = 1;
-    string error_message = 2;
-    google.protobuf.Timestamp expires_at = 3;
-}
-
-message GetQuotaDashboardRequest {}
-message GetQuotaDashboardResponse {
-    mentor.types.SubscriptionDashboardData dashboard = 1;
+    // Флаги фильтрации.
+    bool is_hot = 6;      // Трендовый.
+    bool is_favorite = 7; // В избранном (контекстно).
+    bool is_subscribed = 8; // Есть активная подписка (контекстно).
 }

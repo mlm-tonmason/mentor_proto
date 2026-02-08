@@ -2,139 +2,100 @@ syntax = "proto3";
 
 package mentor.types.chat;
 
-import "mentor/types/common.proto";
-import "mentor/types/bot.proto";
 import "google/protobuf/timestamp.proto";
-
-// --- Enums ---
-
-// Роль автора сообщения.
-enum Role {
-  ROLE_UNSPECIFIED = 0; // Не указана
-  ROLE_USER = 1;        // Пользователь
-  ROLE_BOT = 2;         // Бот (Ассистент)
-  ROLE_SYSTEM = 3;      // Система
-}
-
-// Тип контента.
-enum ContentType {
-  CONTENT_TYPE_UNSPECIFIED = 0; // Не указан
-  CONTENT_TYPE_TEXT = 1;        // Текстовое сообщение
-  CONTENT_TYPE_AUDIO = 2;       // Голосовое сообщение
-  CONTENT_TYPE_IMAGE = 3;       // Изображение
-  CONTENT_TYPE_VIDEO = 4;       // Видео-сообщение
-  CONTENT_TYPE_FILE = 5;        // Файл
-}
-
-// Режим ответа бота в чате.
-enum ChatMode {
-  CHAT_MODE_UNSPECIFIED = 0; // Не указан
-  CHAT_MODE_TEXT = 1;        // Отвечать текстом (по умолчанию)
-  CHAT_MODE_VOICE = 2;       // Отвечать голосом (Voice)
-}
-
-// --- Модели ---
 
 // Поток Чата (Диалог).
 // Один бот может иметь несколько диалогов с одним пользователем.
 message ChatThread {
-  uint32 id = 1; // ID Чата
+  message Id {
+    uint32 id = 1;
+  }
+  message List {
+    repeated ChatThread items = 1;
+  }
+  message Configuration {
+    // Режим ответа бота в чате.
+    message ChatMode {
+      enum Id {
+        UNSPECIFIED = 0; // Не указан
+        TEXT = 1;        // Отвечать текстом (по умолчанию)
+        VOICE = 2;       // Отвечать голосом (Voice)
+      }
+    }
+    ChatMode.Id response_mode = 1;
+    bool sinking_mode_enabled = 2; // Режим "Думать дольше" (Sinking Mode) для более качественных ответов.
+  }
   
-  uint32 bot_id = 2;
-  string user_id = 3; // UUID
-  
-  string title = 4; // Название (редактируемое пользователем).
-  
-  // Статусы.
-  bool is_pinned = 5;       // Закреплен (max 5)
-  bool is_archived = 6;     // В архиве
-  uint32 unread_count = 7; // Счетчик непрочитанных
-  
-  // Сортировка.
-  google.protobuf.Timestamp updated_at = 8;
-  Message last_message = 9;
-
-  // Настройки чата.
-  ChatMode response_mode = 10;
-  bool sinking_mode_enabled = 11; // Режим "Думать дольше"
-
-  // Краткая копия информации о боте (Snapshot).
-  mentor.types.bot.Bot bot_snapshot = 12;
+  uint32 id = 1; // Уникальный ID Чата.
+  uint32 bot_id = 2; // ID бота, с которым идет диалог.
+  uint32 distributor_id = 3; // ID пользователя (дистрибьютора), владеющего чатом.
+  string title = 4; // Название чата (редактируемое пользователем).
+  Configuration configuration = 5; // Настройки чата (режим ответа и т.д.).
+  Message last_message = 6; // Последнее сообщение (для превью в списке).
 }
 
 // Сообщение в чате.
 message Message {
-  string id = 1; // UUID
-  uint32 thread_id = 2;
-  
-  Role role = 3;
-  
-  // Основной контент сообщения.
-  // Используем oneof для чистоты (gRPC Style Guide).
-  oneof content {
-    string text = 4;       // Простой текст / Markdown
-    AudioContent audio = 5; // Аудио / Voice
-    ImageContent image = 6; // Картинка
-    VideoContent video = 7; // Видео
-    FileContent file = 8;   // Файл
+  message Id {
+    uint64 id = 1;
+  }
+  message List {
+    repeated Message items = 1;
+  }
+  message Role {
+    // Роль автора сообщения.
+    enum Id {
+      UNSPECIFIED = 0; // Не указана
+      USER = 1;        // Пользователь
+      BOT = 2;         // Бот (Ассистент)
+      SYSTEM = 3;      // Система (уведомления)
+    }
   }
   
-  // Метаданные.
-  google.protobuf.Timestamp created_at = 10;
-  bool is_favorite = 11; // Добавлено в избранное
-  
-  // Обратная связь (Оценка ответа).
-  uint32 rating_score = 12; // 1-5 (если оценено)
+  // Основной контент сообщения.
+  message Content {
+    message AudioContent {
+      string url = 1;            // Ссылка на аудиофайл (CDN / S3).
+      string transcription = 2;  // Текст расшифровки (Speech-to-Text).
+      int32 duration_seconds = 3; // Длительность аудио в секундах.
+      string mime_type = 4;      // MIME type, например "audio/ogg".
+    }
+    oneof kind {
+      string text = 1;       // Простой текст / Markdown.
+      AudioContent audio = 2; // Голосовое сообщение / Аудио.
+    }
+  }
+
+  uint64 id = 1; // Уникальный ID Сообщения.
+  uint32 thread_id = 2; // ID чата, к которому относится сообщение.
+  Role.Id role = 3; // Кто отправил сообщение.
+  Content content = 4; // Содержимое.
+  bool is_favorite = 5; // Добавлено ли сообщение в избранное.
+  google.protobuf.Timestamp created_at = 6; // Время создания.
 }
 
-// Вложение: Аудио.
-message AudioContent {
-  string url = 1;            // Ссылка на файл
-  string transcription = 2;  // Текст расшифровки (Speech-to-Text)
-  int32 duration_seconds = 3; // Длительность
-  string mime_type = 4;      // e.g. "audio/ogg"
-}
-
-// Вложение: Изображение.
-message ImageContent {
-  string url = 1;
-  string preview_url = 2; // Уменьшенная копия (thumbnail)
-  int32 width = 3;
-  int32 height = 4;
-}
-
-// Вложение: Видео.
-message VideoContent {
-  string url = 1;
-  string preview_url = 2; // Скриншот первого кадра
-  int32 duration_seconds = 3;
-}
-
-// Вложение: Файл.
-message FileContent {
-  string url = 1;
-  string file_name = 2;
-  int64 size_bytes = 3;
-  string mime_type = 4;
-}
 
 // Событие в реальном времени (Server -> Client Stream).
 message ChatEvent {
-  oneof event {
-    TypingIndicator typing = 1; // Индикатор набора
-    Message new_message = 2;    // Новое сообщение
-    Error error = 3;            // Ошибка стрима
+  // Индикатор активности бота.
+  message TypingIndicator {
+    enum Activity {
+      UNSPECIFIED = 0;
+      TYPING = 1;          // Печатает сообщение...
+      RECORDING_VOICE = 2; // Записывает голосовое...
+    }
+    Activity activity = 1;
   }
-}
 
-// Индикатор активности бота.
-message TypingIndicator {
-  bool is_typing = 1;
-  string action_description = 2; // "Думает...", "Записывает..."
-}
-
-// Ошибка в стриме.
-message Error {
-  string code = 1;
-  string message = 2;
+  // Ошибка в стриме.
+  message Error {
+    string code = 1;
+    string message = 2;
+  }
+  
+  oneof event {
+    TypingIndicator typing = 1; // Индикатор набора текста/записи голоса.
+    Message new_message = 2;    // Новое пришедшее сообщение.
+    Error error = 3;            // Ошибка стрима или обработки.
+  }
 }

@@ -4,9 +4,6 @@
 pub struct Bot {
     #[prost(uint32, tag = "1")]
     pub id: u32,
-    /// Внешний ID (Provider).
-    #[prost(string, tag = "9")]
-    pub provider_bot_id: ::prost::alloc::string::String,
     /// Идентификация.
     ///
     /// Уникальный хендл (@handle).
@@ -28,22 +25,22 @@ pub struct Bot {
     pub long_description: ::prost::alloc::string::String,
     /// Инфо о создателе.
     #[prost(message, optional, tag = "7")]
-    pub creator: ::core::option::Option<CreatorInfo>,
+    pub creator: ::core::option::Option<super::identity::PublicUserProfile>,
     /// Классификация.
-    #[prost(enumeration = "BotGenre", tag = "8")]
+    #[prost(enumeration = "bot::genre::Id", tag = "8")]
     pub genre: i32,
     /// Теги категорий.
-    #[prost(string, repeated, tag = "10")]
+    #[prost(string, repeated, tag = "9")]
     pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Статус и статистика.
-    #[prost(enumeration = "BotStatus", tag = "20")]
+    #[prost(enumeration = "bot::status::Id", tag = "10")]
     pub status: i32,
-    /// Знак качества (эксперт).
-    #[prost(bool, tag = "11")]
-    pub is_expert: bool,
     /// Трендовый.
-    #[prost(bool, tag = "12")]
+    #[prost(bool, tag = "11")]
     pub is_hot: bool,
+    /// В архиве (контекстно).
+    #[prost(bool, tag = "12")]
+    pub is_archived: bool,
     /// В избранном (контекстно).
     #[prost(bool, tag = "13")]
     pub is_favorite: bool,
@@ -51,176 +48,141 @@ pub struct Bot {
     #[prost(bool, tag = "14")]
     pub is_subscribed: bool,
     #[prost(message, optional, tag = "15")]
-    pub rating: ::core::option::Option<BotRatingStats>,
-    /// Кол-во активных подписчиков.
+    pub rating: ::core::option::Option<super::Rating>,
     #[prost(uint32, tag = "16")]
-    pub subscribers_count: u32,
-    /// Настройки голоса.
-    #[prost(message, optional, tag = "17")]
-    pub voice_options: ::core::option::Option<VoiceOptions>,
-    /// Версионирование.
-    #[prost(message, optional, tag = "18")]
-    pub updated_at: ::core::option::Option<::prost_types::Timestamp>,
-    #[prost(uint32, tag = "19")]
     pub version: u32,
+    #[prost(message, optional, tag = "17")]
+    pub updated_at: ::core::option::Option<::prost_types::Timestamp>,
 }
-/// Информация об авторе бота.
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct CreatorInfo {
-    /// ID пользователя (UUID) или компании (u32 -> string).
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(enumeration = "CreatorType", tag = "2")]
-    pub r#type: i32,
-    /// Отображаемое имя автора.
-    #[prost(string, tag = "3")]
-    pub name: ::prost::alloc::string::String,
-}
-/// Статистика рейтинга.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BotRatingStats {
-    /// Средняя оценка (1.0 - 5.0).
-    #[prost(float, tag = "1")]
-    pub average: f32,
-    /// Общее количество голосов.
-    #[prost(uint32, tag = "2")]
-    pub count: u32,
-    /// Распределение оценок: звезда (1-5) -> количество голосов.
-    #[prost(map = "uint32, uint32", tag = "3")]
-    pub distribution: ::std::collections::HashMap<u32, u32>,
-}
-/// Опции голоса.
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct VoiceOptions {
-    /// Список доступных голосов.
-    #[prost(string, repeated, tag = "1")]
-    pub allowed_voice_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Голос по умолчанию.
-    #[prost(string, tag = "2")]
-    pub default_voice_id: ::prost::alloc::string::String,
-}
-/// Действие оценки бота пользователем.
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct BotRating {
-    #[prost(uint32, tag = "1")]
-    pub bot_id: u32,
-    /// UUID
-    #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
-    /// Оценка (1-5).
-    #[prost(uint32, tag = "3")]
-    pub score: u32,
-    #[prost(message, optional, tag = "4")]
-    pub created_at: ::core::option::Option<::prost_types::Timestamp>,
-}
-/// Жанр бота (Классификация).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum BotGenre {
-    /// Не указан
-    Unspecified = 0,
-    /// Двойник (создан пользователем)
-    Twin = 1,
-    /// Эксперт (создан компанией)
-    Expert = 2,
-}
-impl BotGenre {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::Unspecified => "BOT_GENRE_UNSPECIFIED",
-            Self::Twin => "BOT_GENRE_TWIN",
-            Self::Expert => "BOT_GENRE_EXPERT",
+/// Nested message and enum types in `Bot`.
+pub mod bot {
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct Id {
+        #[prost(uint32, tag = "1")]
+        pub id: u32,
+    }
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct Ids {
+        #[prost(uint32, repeated, tag = "1")]
+        pub ids: ::prost::alloc::vec::Vec<u32>,
+    }
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct List {
+        #[prost(message, repeated, tag = "1")]
+        pub items: ::prost::alloc::vec::Vec<super::Bot>,
+    }
+    /// Жанр бота (Классификация).
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct Genre {
+        #[prost(enumeration = "genre::Id", tag = "1")]
+        pub id: i32,
+    }
+    /// Nested message and enum types in `Genre`.
+    pub mod genre {
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::prost::Enumeration
+        )]
+        #[repr(i32)]
+        pub enum Id {
+            /// Не указан
+            Unspecified = 0,
+            /// Двойник (создан пользователем)
+            Twin = 1,
+            /// Эксперт (создан компанией)
+            Expert = 2,
+        }
+        impl Id {
+            /// String value of the enum field names used in the ProtoBuf definition.
+            ///
+            /// The values are not transformed in any way and thus are considered stable
+            /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+            pub fn as_str_name(&self) -> &'static str {
+                match self {
+                    Self::Unspecified => "UNSPECIFIED",
+                    Self::Twin => "TWIN",
+                    Self::Expert => "EXPERT",
+                }
+            }
+            /// Creates an enum from field names used in the ProtoBuf definition.
+            pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+                match value {
+                    "UNSPECIFIED" => Some(Self::Unspecified),
+                    "TWIN" => Some(Self::Twin),
+                    "EXPERT" => Some(Self::Expert),
+                    _ => None,
+                }
+            }
         }
     }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "BOT_GENRE_UNSPECIFIED" => Some(Self::Unspecified),
-            "BOT_GENRE_TWIN" => Some(Self::Twin),
-            "BOT_GENRE_EXPERT" => Some(Self::Expert),
-            _ => None,
-        }
+    /// Статус жизненного цикла бота.
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct Status {
+        #[prost(enumeration = "status::Id", tag = "1")]
+        pub id: i32,
     }
-}
-/// Тип создателя.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum CreatorType {
-    /// Не указан
-    Unspecified = 0,
-    /// Пользователь
-    User = 1,
-    /// Компания
-    Company = 2,
-}
-impl CreatorType {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::Unspecified => "CREATOR_TYPE_UNSPECIFIED",
-            Self::User => "CREATOR_TYPE_USER",
-            Self::Company => "CREATOR_TYPE_COMPANY",
+    /// Nested message and enum types in `Status`.
+    pub mod status {
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::prost::Enumeration
+        )]
+        #[repr(i32)]
+        pub enum Id {
+            /// Не указан
+            Unspecified = 0,
+            /// Черновик
+            Draft = 1,
+            /// На модерации
+            Moderation = 2,
+            /// Опубликован (в каталоге)
+            Published = 3,
+            /// В архиве (удален автором)
+            Archived = 4,
+            /// Заблокирован администрацией
+            Blocked = 5,
         }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "CREATOR_TYPE_UNSPECIFIED" => Some(Self::Unspecified),
-            "CREATOR_TYPE_USER" => Some(Self::User),
-            "CREATOR_TYPE_COMPANY" => Some(Self::Company),
-            _ => None,
-        }
-    }
-}
-/// Статус жизненного цикла бота.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum BotStatus {
-    /// Не указан
-    Unspecified = 0,
-    /// Черновик
-    Draft = 1,
-    /// На модерации
-    Moderation = 2,
-    /// Опубликован (в каталоге)
-    Published = 3,
-    /// В архиве (удален автором)
-    Archived = 4,
-    /// Заблокирован администрацией
-    Blocked = 5,
-}
-impl BotStatus {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::Unspecified => "BOT_STATUS_UNSPECIFIED",
-            Self::Draft => "BOT_STATUS_DRAFT",
-            Self::Moderation => "BOT_STATUS_MODERATION",
-            Self::Published => "BOT_STATUS_PUBLISHED",
-            Self::Archived => "BOT_STATUS_ARCHIVED",
-            Self::Blocked => "BOT_STATUS_BLOCKED",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "BOT_STATUS_UNSPECIFIED" => Some(Self::Unspecified),
-            "BOT_STATUS_DRAFT" => Some(Self::Draft),
-            "BOT_STATUS_MODERATION" => Some(Self::Moderation),
-            "BOT_STATUS_PUBLISHED" => Some(Self::Published),
-            "BOT_STATUS_ARCHIVED" => Some(Self::Archived),
-            "BOT_STATUS_BLOCKED" => Some(Self::Blocked),
-            _ => None,
+        impl Id {
+            /// String value of the enum field names used in the ProtoBuf definition.
+            ///
+            /// The values are not transformed in any way and thus are considered stable
+            /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+            pub fn as_str_name(&self) -> &'static str {
+                match self {
+                    Self::Unspecified => "UNSPECIFIED",
+                    Self::Draft => "DRAFT",
+                    Self::Moderation => "MODERATION",
+                    Self::Published => "PUBLISHED",
+                    Self::Archived => "ARCHIVED",
+                    Self::Blocked => "BLOCKED",
+                }
+            }
+            /// Creates an enum from field names used in the ProtoBuf definition.
+            pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+                match value {
+                    "UNSPECIFIED" => Some(Self::Unspecified),
+                    "DRAFT" => Some(Self::Draft),
+                    "MODERATION" => Some(Self::Moderation),
+                    "PUBLISHED" => Some(Self::Published),
+                    "ARCHIVED" => Some(Self::Archived),
+                    "BLOCKED" => Some(Self::Blocked),
+                    _ => None,
+                }
+            }
         }
     }
 }

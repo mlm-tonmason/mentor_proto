@@ -2,31 +2,14 @@ syntax = "proto3";
 
 package mentor.client.system;
 
-import "google/protobuf/timestamp.proto";
 import "mentor/types/identity.proto";
+import "google/protobuf/empty.proto";
 
 // Сервис Системных Данных (System Service).
 service SystemService {
   // Получить конфигурацию системы (Локали, валюты).
-  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+  rpc GetConfig(google.protobuf.Empty) returns (mentor.types.identity.SystemConfig);
 
   // Подписка на стрим курсов валют (Real-time).
-  rpc StreamExchangeRates(StreamExchangeRatesRequest) returns (stream ExchangeRateUpdate);
-}
-
-// Запрос конфигурации.
-message GetConfigRequest {}
-
-message GetConfigResponse {
-  mentor.types.identity.SystemConfig config = 1;
-}
-
-message StreamExchangeRatesRequest {
-  repeated string pairs = 1; // Например, ["TON/USD", "BTC/USD"]
-}
-
-message ExchangeRateUpdate {
-  string pair = 1; // "TON/USD"
-  string rate = 2; // "5.45"
-  google.protobuf.Timestamp updated_at = 3;
+  rpc StreamExchangeRates(mentor.types.identity.ExchangePair.List) returns (stream mentor.types.identity.ExchangeRate);
 }
