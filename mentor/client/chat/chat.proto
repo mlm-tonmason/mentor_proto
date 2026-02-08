@@ -37,7 +37,7 @@ service ChatService {
   // или использовать отдельное поле, если Cursor не подходит.
   // В текущей реализации mentor.types.Cursor содержит filters map<string, string>.
   // Ожидается bot_id в фильтре курсора.
-  rpc ListChats(mentor.types.Cursor) returns (mentor.types.chat.ChatThread.List);
+  rpc ListChats(ListChatsRequest) returns (mentor.types.chat.ChatThread.List);
 
   // Обновить название чата (пользовательское).
   rpc UpdateChatTitle(UpdateChatTitleRequest) returns (mentor.types.chat.ChatThread);
@@ -87,6 +87,11 @@ message ListContactBotsResponse {
   mentor.types.bot.Bot.Ids pin_order_bot_ids = 2;
 }
 
+message ListChatsRequest {
+  uint32 bot_id = 1;
+  mentor.types.Cursor cursor = 2;
+}
+
 message UpdateChatTitleRequest {
   uint32 thread_id = 1;
   string title = 2; // Новое название (если пустое не меняем).
@@ -98,10 +103,12 @@ message UpdateChatConfigurationRequest {
 }
 
 message GetHistoryRequest {
-  mentor.types.Cursor cursor = 1;
+  uint32 thread_id = 1; // ID чата (обязательно).
+
+  mentor.types.Cursor cursor = 2;
   
   // Фильтр: искать только избранные сообщения.
-  bool only_favorites = 2;
+  bool only_favorites = 3;
 }
 
 message SendMessageRequest {

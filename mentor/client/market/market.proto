@@ -61,4 +61,7 @@ message SearchBotsRequest {
     bool is_hot = 6;      // Трендовый.
     bool is_favorite = 7; // В избранном (контекстно).
     bool is_subscribed = 8; // Есть активная подписка (контекстно).
+    
+    // Пагинация.
+    mentor.types.Cursor cursor = 9;
 }

@@ -4,47 +4,37 @@
 
 ### Bot (Бот / Эксперт / Двойник)
 Сущность бота-эксперта или двойника, отображаемая в Маркетплейсе.
-* **id** (u32): Уникальный идентификатор.
-* **providerBotId** (string): ID у Provider (внешний сервис).
-* **systemName** (string): Уникальный системный идентификатор (handle), например `@elon_musk_twin`.
-* **displayName** (string): Отображаемое имя (например, "Elon Musk").
-* **descriptions**:
-    * `short` (string): Краткое описание для карточки (max 100 символов).
-    * `long` (text): Полное описание для детальной страницы.
-* **status** (enum):
-    * `DRAFT`: Черновик.
-    * `MODERATION`: На проверке.
-    * `BLOCKED`: Заблокирован.
-    * `PUBLISHED`: Доступен в каталоге.
-    * `ARCHIVED`: Удален автором.
-* **avatarUrl** (string): URL изображения обложки/бота.
-* **ver**:
-    * `updatedAt` (timestamp): Дата последнего изменения промпта/настроек. (Авто-миграция контекста, стратегия 4.2C).
-    * `version` (u32): Инкрементальная версия конфига.
-* **creator**:
-    * `id` (u32): ID создателя.
-    * `type` (enum): `COMPANY` (платформа) / `USER` (пользователь).
-* **classification**:
-    * `genre` (enum): `EXPERT` (если creator=COMPANY), `TWIN` (если creator=USER). Автоматически определяется.
-    * `tags` (list string): Теги категорий (Бизнес, Здоровье, IT).
-* **stats**:
-    * `isExpert` (boolean): "Included TonMason" (эксперт компании).
-    * `isHot` (boolean): Популярный/Трендовый.
-    * `isFavorite` (boolean): В избранном у текущего пользователя.
-    * `rating`:
-        * `average` (f32): Средняя оценка (1.0 - 5.0).
-        * `count` (u32): Общее количество оценок.
-        * `distribution` (map<u32, u32>): Распределение (ключ - балл, значение - кол-во).
-            * *Пример*: `5: 120, 4: 20, 1: 2`. Позволяет рисовать гистограмму.
-    * `subscribersCount` (u32): Количество активных подписчиков.
-* **voiceOptions** (object): Настройки голоса.
-    * `allowedVoiceIds` (list string): Список допустимых ID голосов (от Provider).
-    * `defaultVoiceId` (string): Голос по умолчанию.
 
-### BotRating (Оценка Бота)
-Персональная оценка пользователя боту.
-* **botId** (u32): Ссылка на бота.
-* **userId** (u32): Ссылка на пользователя.
-* **score** (u32): Оценка (1-5 звезд).
-* **createdAt** (timestamp): Дата оценки.
-* **constraints**: Один пользователь - Одна оценка на бота (можно обновлять).
+* **id** (u32): Уникальный идентификатор.
+* **system_name** (string): Уникальный системный идентификатор (handle), например `@elon_musk_twin`.
+* **display_name** (string): Отображаемое имя (например, "Elon Musk").
+* **avatar_url** (string): URL изображения обложки/бота.
+* **short_description** (string): Краткое описание для карточки.
+* **long_description** (string): Полное описание для детальной страницы.
+
+* **creator** (PublicUserProfile): Инфо о создателе бота.
+
+* **genre** (enum Genre.Id):
+    * `UNSPECIFIED`: Не указан.
+    * `TWIN`: Двойник (создан пользователем).
+    * `EXPERT`: Эксперт (создан компанией).
+
+* **status** (enum Status.Id):
+    * `DRAFT`: Черновик.
+    * `MODERATION`: На модерации.
+    * `PUBLISHED`: Опубликован.
+    * `ARCHIVED`: В архиве.
+    * `BLOCKED`: Заблокирован.
+
+* **tags** (list string): Теги категорий.
+
+* **Flags**:
+    * `is_hot` (bool): Трендовый.
+    * `is_archived` (bool): В архиве (контекстно).
+    * `is_favorite` (bool): В избранном (контекстно).
+    * `is_subscribed` (bool): Есть активная подписка (контекстно).
+
+* **rating** (mentor.types.Rating): Статистика рейтинга (средняя оценка, распределение).
+
+* **version** (u32): Версия бота.
+* **updated_at** (timestamp): Дата последнего обновления.

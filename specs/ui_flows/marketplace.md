@@ -10,33 +10,25 @@
 
 ![Experts List](./assets/marketplace_experts.png)
 
-### Блок: Фильтры (Аналогично Twins)
-* **API Метод**: `BotService/ListBots({ genre: "EXPERT", ... })`.
-* **Визуальные отличия**:
-    *   Карточки могут иметь специальные бейджи "Official" или "TonMason Certified".
-    *   Возможно, другая цветовая схема или выделение (Accent Color).
-
 ### Блок: Фильтры (Sidebar / Top Bar)
-* **API Метод**: `BotService/ListBots({ genre: "TWIN", ... })`.
+* **API Метод**: `MarketService/SearchBots`.
+* **Параметры**:
+    *   `genre`: TWIN или EXPERT.
+    *   `tags`: Список категорий.
+    *   `sort_order`: CREATED_AT, RATING, PRICE.
 * **Логика Фильтрации**:
-    1.  **Категории (Category)**:
-        *   Список жанров/тегов (например, "Бизнес", "IT", "Коучинг").
-        *   Множественный выбор (Checkbox) или Одиночный (Radio).
+    1.  **Категории (Tags)**: Множественный выбор.
     2.  **Свойства (Flags)**:
-        *   **Favorites Only**: Показать только избранных (`isFavorite=true`).
-        *   **HOT / Top Rated**:
-            *   Фильтр "Трендовые" (`isHot=true`).
-            *   *Альтернатива*: Фильтр "Высокий рейтинг" (`minRating=4.5` или сортировка по рейтингу).
-            *   Отображаются боты с наибольшим количеством звезд/подписчиков.
+        *   **Hot** (`is_hot`).
+        *   **Favorites** (локальный фильтр или отдельный запрос `ListMyLibrary`).
 
 ### Блок: Сетка Ботов (Bots Grid)
 * **Модель**: `Bot` (Краткая информация).
 * **Элементы Карточки**:
     *   **Аватар и Имя**.
-    *   **Описание**: `shortDescription` (обрезается).
-    *   **Бейджи**: `HOT`, `EXPERT` (если применимо).
-    *   **Рейтинг**: Звезды (например, "★ 4.8 (120)").
-    *   **Цена**: "от 10 TON".
+    *   **Описание**: `short_description`.
+    *   **Бейджи**: `HOT`, `EXPERT` (v2).
+    *   **Рейтинг**: `rating.average` (★ 4.8).
     *   **Действия**:
         *   Клик -> Переход на страницу [Карточка Бота](./bot_details.md).
-        *   Like/Star -> Добавить в избранное (`ToggleBotFavorite`).
+        *   Like/Star -> `MarketService/AddToFavorites` / `RemoveFromFavorites`.

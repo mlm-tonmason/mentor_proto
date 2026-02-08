@@ -31,6 +31,9 @@ pub struct SearchBotsRequest {
     /// Есть активная подписка (контекстно).
     #[prost(bool, tag = "8")]
     pub is_subscribed: bool,
+    /// Пагинация.
+    #[prost(message, optional, tag = "9")]
+    pub cursor: ::core::option::Option<super::super::types::Cursor>,
 }
 /// Generated server implementations.
 pub mod market_service_server {

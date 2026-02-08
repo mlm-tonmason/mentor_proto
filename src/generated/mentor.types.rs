@@ -21,7 +21,7 @@ pub struct DateRange {
     pub to: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Курсор для пагинации (ID-based).
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Cursor {
     /// Последний известный идентификатор (курсор).
     /// Если не указан (null/0), выборка начинается с начала или с конца списка
@@ -35,12 +35,6 @@ pub struct Cursor {
     /// Направление выборки (по умолчанию ASC/FORWARD).
     #[prost(enumeration = "cursor::SortOrder", tag = "3")]
     pub sort_order: i32,
-    /// Дополнительные фильтры (например, "bot_id": "123").
-    #[prost(map = "string, string", tag = "4")]
-    pub filters: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        ::prost::alloc::string::String,
-    >,
 }
 /// Nested message and enum types in `Cursor`.
 pub mod cursor {

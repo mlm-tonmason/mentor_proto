@@ -37,6 +37,13 @@ pub mod list_contact_bots_response {
         >,
     }
 }
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ListChatsRequest {
+    #[prost(uint32, tag = "1")]
+    pub bot_id: u32,
+    #[prost(message, optional, tag = "2")]
+    pub cursor: ::core::option::Option<super::super::types::Cursor>,
+}
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UpdateChatTitleRequest {
     #[prost(uint32, tag = "1")]
@@ -54,12 +61,15 @@ pub struct UpdateChatConfigurationRequest {
         super::super::types::chat::chat_thread::Configuration,
     >,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetHistoryRequest {
-    #[prost(message, optional, tag = "1")]
+    /// ID чата (обязательно).
+    #[prost(uint32, tag = "1")]
+    pub thread_id: u32,
+    #[prost(message, optional, tag = "2")]
     pub cursor: ::core::option::Option<super::super::types::Cursor>,
     /// Фильтр: искать только избранные сообщения.
-    #[prost(bool, tag = "2")]
+    #[prost(bool, tag = "3")]
     pub only_favorites: bool,
 }
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
@@ -138,7 +148,7 @@ pub mod chat_service_server {
         /// Ожидается bot_id в фильтре курсора.
         async fn list_chats(
             &self,
-            request: tonic::Request<super::super::super::types::Cursor>,
+            request: tonic::Request<super::ListChatsRequest>,
         ) -> std::result::Result<
             tonic::Response<super::super::super::types::chat::chat_thread::List>,
             tonic::Status,
@@ -476,7 +486,7 @@ pub mod chat_service_server {
                     struct ListChatsSvc<T: ChatService>(pub Arc<T>);
                     impl<
                         T: ChatService,
-                    > tonic::server::UnaryService<super::super::super::types::Cursor>
+                    > tonic::server::UnaryService<super::ListChatsRequest>
                     for ListChatsSvc<T> {
                         type Response = super::super::super::types::chat::chat_thread::List;
                         type Future = BoxFuture<
@@ -485,7 +495,7 @@ pub mod chat_service_server {
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::super::super::types::Cursor>,
+                            request: tonic::Request<super::ListChatsRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
