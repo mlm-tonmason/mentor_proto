@@ -68,3 +68,14 @@ message CreateOrderResponse {
     string order_id = 1;
 }
 ```
+
+## 6. Clean Requests (Empty)
+If a method takes no arguments (or returns nothing substantial), use `google.protobuf.Empty`. Do not create `MyRequest {}`.
+
+```protobuf
+import "google/protobuf/empty.proto";
+
+service MyService {
+    rpc Ping(google.protobuf.Empty) returns (PingResponse);
+}
+```

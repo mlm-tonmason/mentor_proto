@@ -20,10 +20,14 @@ syntax = "proto3";
 
 package myproject.types;
 
-option go_package = "github.com/myorg/myproject/gen/go/myproject/types";
-
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto"; // If used
 ```
+
+### 2.3. Service Definitions
+- **Empty Requests/Responses**: Do NOT define empty messages like `message MyRequest {}`. Use `google.protobuf.Empty`.
+    - *Good*: `rpc Ping(google.protobuf.Empty) returns (Pong);`
+    - *Bad*: `rpc Ping(PingRequest) returns (Pong); message PingRequest {}`
 
 ### 2.2. Message Structure
 The main entity message should act as a namespace for its related types (Ids, Lists, Enums).

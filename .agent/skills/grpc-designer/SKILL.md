@@ -36,6 +36,9 @@ Every new entity MUST have:
 - `google.protobuf.Timestamp created_at/updated_at`.
 - Wrapped enums in a sub-message (e.g., `message Status { enum Id { ... } }`).
 
+### Clean Requests
+- **Empty Messages**: Avoid creating custom empty messages (e.g., `message MyRequest {}`). Always use `google.protobuf.Empty` instead.
+
 ### Field Management (Versioning)
 - **Never delete fields**: Change the field name to `deprecated_field_name` and add `[deprecated = true]`.
 - **Never reuse field numbers**: Once a field number is used, it is burned forever.
