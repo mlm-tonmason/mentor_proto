@@ -2,9 +2,8 @@ syntax = "proto3";
 
 package mentor.admin.profile;
 
-option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/admin/profile";
-
-import "mentor/types/memory.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
 
 // Админ-сервис управления шаблонами профилей.
 service ProfileAdminService {
@@ -21,20 +20,44 @@ service ProfileAdminService {
     rpc BindBotToTemplate(BindBotToTemplateRequest) returns (BindBotToTemplateResponse);
 }
 
+// Шаблон профиля пользователя (схема данных для LLM).
+// Определяет, какие поля бот должен заполнять о пользователе.
+message UserProfileTemplate {
+  string template_id = 1;    // Уникальный идентификатор шаблона.
+  string display_name = 2;   // Человекочитаемое название.
+  string description = 3;    // Описание назначения шаблона.
+  string active_version = 4; // Текущая активная версия (семантическая).
+
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+// Версия шаблона профиля (конкретная схема).
+message UserProfileTemplateVersion {
+  string template_id = 1; // Ссылка на шаблон.
+  string version = 2;     // Версия (например, "1.0.0").
+
+  // Схема данных (JSON Schema или произвольная структура).
+  // Определяет, какие поля бот должен извлекать из диалога.
+  google.protobuf.Struct schema = 3;
+
+  google.protobuf.Timestamp created_at = 4;
+}
+
 message CreateTemplateRequest {
-    mentor.types.UserProfileTemplate template = 1;
+    UserProfileTemplate template = 1;
 }
 
 message CreateTemplateResponse {
-    mentor.types.UserProfileTemplate template = 1;
+    UserProfileTemplate template = 1;
 }
 
 message UpdateTemplateRequest {
-    mentor.types.UserProfileTemplate template = 1;
+    UserProfileTemplate template = 1;
 }
 
 message UpdateTemplateResponse {
-    mentor.types.UserProfileTemplate template = 1;
+    UserProfileTemplate template = 1;
 }
 
 message ListTemplatesRequest {
@@ -43,16 +66,16 @@ message ListTemplatesRequest {
 }
 
 message ListTemplatesResponse {
-    repeated mentor.types.UserProfileTemplate items = 1;
+    repeated UserProfileTemplate items = 1;
     string next_page_token = 2;
 }
 
 message CreateTemplateVersionRequest {
-    mentor.types.UserProfileTemplateVersion version = 1;
+    UserProfileTemplateVersion version = 1;
 }
 
 message CreateTemplateVersionResponse {
-    mentor.types.UserProfileTemplateVersion version = 1;
+    UserProfileTemplateVersion version = 1;
 }
 
 message GetTemplateVersionRequest {
@@ -61,7 +84,7 @@ message GetTemplateVersionRequest {
 }
 
 message GetTemplateVersionResponse {
-    mentor.types.UserProfileTemplateVersion version = 1;
+    UserProfileTemplateVersion version = 1;
 }
 
 message BindBotToTemplateRequest {
@@ -72,3 +95,4 @@ message BindBotToTemplateRequest {
 message BindBotToTemplateResponse {
     bool success = 1;
 }
+

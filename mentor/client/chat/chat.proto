@@ -32,6 +32,10 @@ service ChatService {
 
   // --- Управление Диалогами (Тредами) ---
 
+  // Создать новый диалог с ботом.
+  // Возвращает созданный ChatThread с присвоенным ID.
+  rpc CreateChat(CreateChatRequest) returns (mentor.types.chat.ChatThread);
+
   // Получить список диалогов в конкретном боте (с пагинацией).
   // В запросе (mentor.types.Cursor) нужно передать bot_id в фильтрах, если это предусмотрено,
   // или использовать отдельное поле, если Cursor не подходит.
@@ -85,6 +89,17 @@ message ListContactBotsResponse {
   // Текущий порядок закрепленных ботов (список ID).
   // Используется для сортировки на клиенте.
   mentor.types.bot.Bot.Ids pin_order_bot_ids = 2;
+}
+
+message CreateChatRequest {
+  // ID бота, с которым создается диалог.
+  uint32 bot_id = 1;
+
+  // Необязательное начальное название чата.
+  string title = 2;
+
+  // Необязательные начальные настройки.
+  mentor.types.chat.ChatThread.Configuration configuration = 3;
 }
 
 message ListChatsRequest {

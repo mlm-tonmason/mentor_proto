@@ -37,6 +37,20 @@ pub mod list_contact_bots_response {
         >,
     }
 }
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct CreateChatRequest {
+    /// ID бота, с которым создается диалог.
+    #[prost(uint32, tag = "1")]
+    pub bot_id: u32,
+    /// Необязательное начальное название чата.
+    #[prost(string, tag = "2")]
+    pub title: ::prost::alloc::string::String,
+    /// Необязательные начальные настройки.
+    #[prost(message, optional, tag = "3")]
+    pub configuration: ::core::option::Option<
+        super::super::types::chat::chat_thread::Configuration,
+    >,
+}
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListChatsRequest {
     #[prost(uint32, tag = "1")]
@@ -139,6 +153,15 @@ pub mod chat_service_server {
             request: tonic::Request<super::super::super::types::bot::bot::Ids>,
         ) -> std::result::Result<
             tonic::Response<super::super::super::types::bot::bot::Ids>,
+            tonic::Status,
+        >;
+        /// Создать новый диалог с ботом.
+        /// Возвращает созданный ChatThread с присвоенным ID.
+        async fn create_chat(
+            &self,
+            request: tonic::Request<super::CreateChatRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::super::super::types::chat::ChatThread>,
             tonic::Status,
         >;
         /// Получить список диалогов в конкретном боте (с пагинацией).
@@ -466,6 +489,51 @@ pub mod chat_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = ReorderPinnedBotsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/mentor.client.chat.ChatService/CreateChat" => {
+                    #[allow(non_camel_case_types)]
+                    struct CreateChatSvc<T: ChatService>(pub Arc<T>);
+                    impl<
+                        T: ChatService,
+                    > tonic::server::UnaryService<super::CreateChatRequest>
+                    for CreateChatSvc<T> {
+                        type Response = super::super::super::types::chat::ChatThread;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreateChatRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as ChatService>::create_chat(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = CreateChatSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

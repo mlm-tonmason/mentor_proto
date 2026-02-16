@@ -28,8 +28,18 @@
         * `duration_seconds` (i32).
 
 ### ChatEvent (Real-time событие)
-Событие, приходящее в стрим `SubscribeToEvents`.
-* **typing** (TypingIndicator):
+Единый стрим для всех чат-событий: реалтайм + жизненный цикл.
+Приходит в стрим `SubscribeToEvents`.
+
+**oneof event:**
+* **typing** (TypingIndicator): Индикатор набора текста/записи голоса.
+    * `thread_id` (u32): ID чата.
     * `activity` (enum): `TYPING`, `RECORDING_VOICE`.
-* **new_message** (Message): Новое сообщение.
+* **new_message** (Message): Новое пришедшее сообщение.
 * **error** (Error): Ошибка стрима.
+* **chat_created** (ChatThread): Новый диалог создан.
+* **chat_updated** (ChatThread): Диалог обновлен (название, настройки, архивация).
+* **chat_deleted** (ChatThread.Id): Диалог удален.
+* **pin_changed** (PinChanged): Изменен состав/порядок закрепленных ботов.
+    * `pinned_bot_ids` (list u32): Актуальный порядок.
+

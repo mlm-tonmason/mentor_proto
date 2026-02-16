@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package mentor.admin.voice;
 
-option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/admin/voice";
-
 // Админ-сервис управления голосами.
 service VoiceAdminService {
     rpc ListAvailableVoices(ListAvailableVoicesRequest) returns (ListAvailableVoicesResponse);

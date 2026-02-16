@@ -215,9 +215,10 @@ pub mod message {
     }
 }
 /// Событие в реальном времени (Server -> Client Stream).
+/// Единый стрим для всех чат-событий: реалтайм + жизненный цикл.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ChatEvent {
-    #[prost(oneof = "chat_event::Event", tags = "1, 2, 3")]
+    #[prost(oneof = "chat_event::Event", tags = "1, 2, 3, 4, 5, 6, 7")]
     pub event: ::core::option::Option<chat_event::Event>,
 }
 /// Nested message and enum types in `ChatEvent`.
@@ -225,7 +226,10 @@ pub mod chat_event {
     /// Индикатор активности бота.
     #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct TypingIndicator {
-        #[prost(enumeration = "typing_indicator::Activity", tag = "1")]
+        /// ID чата, в котором происходит активность.
+        #[prost(uint32, tag = "1")]
+        pub thread_id: u32,
+        #[prost(enumeration = "typing_indicator::Activity", tag = "2")]
         pub activity: i32,
     }
     /// Nested message and enum types in `TypingIndicator`.
@@ -280,8 +284,18 @@ pub mod chat_event {
         #[prost(string, tag = "2")]
         pub message: ::prost::alloc::string::String,
     }
+    /// Событие изменения закрепления ботов.
+    /// Отправляется при PinBot, UnpinBot, ReorderPinnedBots.
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct PinChanged {
+        /// Актуальный порядок закрепленных ботов.
+        #[prost(uint32, repeated, tag = "1")]
+        pub pinned_bot_ids: ::prost::alloc::vec::Vec<u32>,
+    }
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum Event {
+        /// --- Реалтайм ---
+        ///
         /// Индикатор набора текста/записи голоса.
         #[prost(message, tag = "1")]
         Typing(TypingIndicator),
@@ -291,5 +305,21 @@ pub mod chat_event {
         /// Ошибка стрима или обработки.
         #[prost(message, tag = "3")]
         Error(Error),
+        /// --- Жизненный цикл чатов ---
+        ///
+        /// Новый диалог создан.
+        #[prost(message, tag = "4")]
+        ChatCreated(super::ChatThread),
+        /// Диалог обновлен (название, настройки, архивация).
+        #[prost(message, tag = "5")]
+        ChatUpdated(super::ChatThread),
+        /// Диалог удален.
+        #[prost(message, tag = "6")]
+        ChatDeleted(super::chat_thread::Id),
+        /// --- Управление контактами ---
+        ///
+        /// Изменен порядок/состав закрепленных ботов.
+        #[prost(message, tag = "7")]
+        PinChanged(PinChanged),
     }
 }

@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package mentor.admin.bot;
 
-option go_package = "github.com/mlm-tonmason/mentor-proto/gen/go/mentor/admin/bot";
-
 import "mentor/types/bot.proto";
 import "mentor/types/billing.proto";
 
@@ -20,19 +18,19 @@ service BotAdminService {
 }
 
 message CreateBotRequest {
-    mentor.types.Bot bot = 1;
+    mentor.types.bot.Bot bot = 1;
 }
 
 message CreateBotResponse {
-    mentor.types.Bot bot = 1;
+    mentor.types.bot.Bot bot = 1;
 }
 
 message UpdateBotRequest {
-    mentor.types.Bot bot = 1;
+    mentor.types.bot.Bot bot = 1;
 }
 
 message UpdateBotResponse {
-    mentor.types.Bot bot = 1;
+    mentor.types.bot.Bot bot = 1;
 }
 
 message DeleteBotRequest {
@@ -49,22 +47,22 @@ message ListBotsRequest {
 }
 
 message ListBotsResponse {
-    repeated mentor.types.Bot items = 1;
+    repeated mentor.types.bot.Bot items = 1;
     string next_page_token = 2;
 }
 
 message CreatePricingPlanRequest {
-    mentor.types.PricingPlan plan = 1;
+    mentor.types.billing.BotTariffPlan plan = 1;
 }
 
 message CreatePricingPlanResponse {
-    mentor.types.PricingPlan plan = 1;
+    mentor.types.billing.BotTariffPlan plan = 1;
 }
 
 message UpdatePricingPlanRequest {
-    mentor.types.PricingPlan plan = 1;
+    mentor.types.billing.BotTariffPlan plan = 1;
 }
 
 message UpdatePricingPlanResponse {
-    mentor.types.PricingPlan plan = 1;
+    mentor.types.billing.BotTariffPlan plan = 1;
 }

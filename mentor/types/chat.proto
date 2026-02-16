@@ -76,6 +76,7 @@ message Message {
 
 
 // Событие в реальном времени (Server -> Client Stream).
+// Единый стрим для всех чат-событий: реалтайм + жизненный цикл.
 message ChatEvent {
   // Индикатор активности бота.
   message TypingIndicator {
@@ -84,7 +85,8 @@ message ChatEvent {
       TYPING = 1;          // Печатает сообщение...
       RECORDING_VOICE = 2; // Записывает голосовое...
     }
-    Activity activity = 1;
+    uint32 thread_id = 1; // ID чата, в котором происходит активность.
+    Activity activity = 2;
   }
 
   // Ошибка в стриме.
@@ -92,10 +94,25 @@ message ChatEvent {
     string code = 1;
     string message = 2;
   }
+
+  // Событие изменения закрепления ботов.
+  // Отправляется при PinBot, UnpinBot, ReorderPinnedBots.
+  message PinChanged {
+    repeated uint32 pinned_bot_ids = 1; // Актуальный порядок закрепленных ботов.
+  }
   
   oneof event {
+    // --- Реалтайм ---
     TypingIndicator typing = 1; // Индикатор набора текста/записи голоса.
     Message new_message = 2;    // Новое пришедшее сообщение.
     Error error = 3;            // Ошибка стрима или обработки.
+
+    // --- Жизненный цикл чатов ---
+    ChatThread chat_created = 4;    // Новый диалог создан.
+    ChatThread chat_updated = 5;    // Диалог обновлен (название, настройки, архивация).
+    ChatThread.Id chat_deleted = 6; // Диалог удален.
+
+    // --- Управление контактами ---
+    PinChanged pin_changed = 7;     // Изменен порядок/состав закрепленных ботов.
   }
 }
