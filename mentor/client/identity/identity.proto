@@ -3,6 +3,7 @@ syntax = "proto3";
 package mentor.client.identity;
 
 import "mentor/types/identity.proto";
+import "mentor/types/common.proto";
 import "google/protobuf/empty.proto";
 
 // Сервис Идентификации (Профиль и Настройки).
@@ -12,4 +13,13 @@ service IdentityService {
 
   // Сменить язык коммуникации с ботами (interface_language).
   rpc ChangeLanguage(mentor.types.identity.Locale.Id) returns (mentor.types.identity.UserProfile);
+
+  // Получить балансы по всем валютам текущего пользователя.
+  rpc GetBalances(google.protobuf.Empty) returns (BalancesResponse);
+}
+
+// Ответ с балансами пользователя по каждой валюте.
+message BalancesResponse {
+  // Список балансов (одна запись = одна валюта).
+  repeated mentor.types.Money balances = 1;
 }

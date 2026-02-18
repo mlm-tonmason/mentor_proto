@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package mentor.types.identity;
 
-import "mentor/types/common.proto";
 import "google/protobuf/timestamp.proto";
 
 // Обогащенный профиль пользователя (составной ответ API).
@@ -12,9 +11,6 @@ message UserProfile {
 
   // Язык коммуникации с ботами (en, ru).
   Locale interface_language = 2;
-
-  // Мультивалютный кошелек.
-  repeated mentor.types.Money balances = 3;
 }
 
 // Публичный профиль пользователя.

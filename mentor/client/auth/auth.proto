@@ -29,26 +29,19 @@ message LoginRequest {
 
 // Авторизация через Mini App (Web App).
 message TelegramMiniAppAuth {
-  // ID бота (Provider Bot ID), через которого открыт Mini App.
-  // Необходим серверу для выбора корректного Bot Token для проверки подписи.
-  string bot_id = 1;
-
   // Строка `initData` (query string), полученная от TWA.
   // Содержит user, auth_date, hash и start_param (ref).
-  string init_data = 2;
+  string init_data = 1;
 }
 
 // Авторизация через Telegram Login Widget.
 message TelegramWidgetAuth {
-  // ID бота (Provider Bot ID), к которому привязан виджет.
-  string bot_id = 1;
-
   // Данные авторизации от виджета (обычно JSON или query string с hash).
   // Поля: id, first_name, username, photo_url, auth_date, hash.
-  string data = 2;
+  string data = 1;
 
   // Реферальная ссылка (опционально), так как виджет её не передает сам.
-  string ref_link_id = 3;
+  string ref_link_id = 2;
 }
 
 message LoginResponse {

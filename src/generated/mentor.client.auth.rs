@@ -20,30 +20,23 @@ pub mod login_request {
 /// Авторизация через Mini App (Web App).
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct TelegramMiniAppAuth {
-    /// ID бота (Provider Bot ID), через которого открыт Mini App.
-    /// Необходим серверу для выбора корректного Bot Token для проверки подписи.
-    #[prost(string, tag = "1")]
-    pub bot_id: ::prost::alloc::string::String,
     /// Строка `initData` (query string), полученная от TWA.
     /// Содержит user, auth_date, hash и start_param (ref).
-    #[prost(string, tag = "2")]
+    #[prost(string, tag = "1")]
     pub init_data: ::prost::alloc::string::String,
 }
 /// Авторизация через Telegram Login Widget.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct TelegramWidgetAuth {
-    /// ID бота (Provider Bot ID), к которому привязан виджет.
-    #[prost(string, tag = "1")]
-    pub bot_id: ::prost::alloc::string::String,
     /// Данные авторизации от виджета (обычно JSON или query string с hash).
     /// Поля: id, first_name, username, photo_url, auth_date, hash.
-    #[prost(string, tag = "2")]
+    #[prost(string, tag = "1")]
     pub data: ::prost::alloc::string::String,
     /// Реферальная ссылка (опционально), так как виджет её не передает сам.
-    #[prost(string, tag = "3")]
+    #[prost(string, tag = "2")]
     pub ref_link_id: ::prost::alloc::string::String,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LoginResponse {
     /// Идентификатор сессии (Постоянный токен, пока не выйдет срок жизни сессии).
     #[prost(string, tag = "1")]
