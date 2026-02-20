@@ -11,5 +11,6 @@ service SystemService {
   rpc GetConfig(google.protobuf.Empty) returns (mentor.types.identity.SystemConfig);
 
   // Подписка на стрим курсов валют (Real-time).
-  rpc StreamExchangeRates(mentor.types.identity.ExchangePair.List) returns (stream mentor.types.identity.ExchangeRate);
+  // Сервер отправляет обновление каждый раз, когда изменяется любой курс.
+  rpc StreamExchangeRates(google.protobuf.Empty) returns (stream mentor.types.identity.ExchangeRate);
 }

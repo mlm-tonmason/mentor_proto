@@ -30,11 +30,10 @@ pub mod system_service_server {
             + std::marker::Send
             + 'static;
         /// Подписка на стрим курсов валют (Real-time).
+        /// Сервер отправляет обновление каждый раз, когда изменяется любой курс.
         async fn stream_exchange_rates(
             &self,
-            request: tonic::Request<
-                super::super::super::types::identity::exchange_pair::List,
-            >,
+            request: tonic::Request<()>,
         ) -> std::result::Result<
             tonic::Response<Self::StreamExchangeRatesStream>,
             tonic::Status,
@@ -160,23 +159,15 @@ pub mod system_service_server {
                 "/mentor.client.system.SystemService/StreamExchangeRates" => {
                     #[allow(non_camel_case_types)]
                     struct StreamExchangeRatesSvc<T: SystemService>(pub Arc<T>);
-                    impl<
-                        T: SystemService,
-                    > tonic::server::ServerStreamingService<
-                        super::super::super::types::identity::exchange_pair::List,
-                    > for StreamExchangeRatesSvc<T> {
+                    impl<T: SystemService> tonic::server::ServerStreamingService<()>
+                    for StreamExchangeRatesSvc<T> {
                         type Response = super::super::super::types::identity::ExchangeRate;
                         type ResponseStream = T::StreamExchangeRatesStream;
                         type Future = BoxFuture<
                             tonic::Response<Self::ResponseStream>,
                             tonic::Status,
                         >;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<
-                                super::super::super::types::identity::exchange_pair::List,
-                            >,
-                        ) -> Self::Future {
+                        fn call(&mut self, request: tonic::Request<()>) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
                                 <T as SystemService>::stream_exchange_rates(&inner, request)

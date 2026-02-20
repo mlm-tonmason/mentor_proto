@@ -7,6 +7,12 @@ import "google/protobuf/timestamp.proto";
 // Деньги (денежная сумма).
 // Используется string для точного представления decimal.
 message Money {
+  
+  // Список денежных сумм (балансы по нескольким валютам).
+  message List {
+    repeated Money items = 1;
+  }
+
   // Уникальный идентификатор валюты (из справочника Currency).
   string currency_code = 1;
 

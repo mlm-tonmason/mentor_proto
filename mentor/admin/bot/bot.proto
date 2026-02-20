@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package mentor.admin.bot;
 
+import "google/protobuf/empty.proto";
 import "mentor/types/bot.proto";
 import "mentor/types/billing.proto";
 
@@ -9,7 +10,7 @@ import "mentor/types/billing.proto";
 service BotAdminService {
     rpc CreateBot(CreateBotRequest) returns (CreateBotResponse);
     rpc UpdateBot(UpdateBotRequest) returns (UpdateBotResponse);
-    rpc DeleteBot(DeleteBotRequest) returns (DeleteBotResponse);
+    rpc DeleteBot(mentor.types.bot.Bot.Id) returns (google.protobuf.Empty);
     rpc ListBots(ListBotsRequest) returns (ListBotsResponse);
 
     // Управление тарифами бота.
@@ -33,13 +34,6 @@ message UpdateBotResponse {
     mentor.types.bot.Bot bot = 1;
 }
 
-message DeleteBotRequest {
-    string bot_id = 1;
-}
-
-message DeleteBotResponse {
-    bool success = 1;
-}
 
 message ListBotsRequest {
     int32 page_size = 1;

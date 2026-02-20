@@ -17,6 +17,9 @@ service BillingService {
   // Если нет — создается новая подписка.
   rpc PurchaseBotSubscription(mentor.types.billing.BotTariffPlan.Id) returns (mentor.types.billing.BotSubscription);
 
+  // Получить балансы текущего пользователя по всем валютам.
+  rpc GetBalances(google.protobuf.Empty) returns (mentor.types.Money.List);
+
   // Получить детали конкретной транзакции.
   rpc GetTransaction(mentor.types.billing.Transaction.Id) returns (mentor.types.billing.Transaction);
 

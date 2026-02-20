@@ -10,6 +10,15 @@ pub struct Money {
     #[prost(string, tag = "2")]
     pub amount: ::prost::alloc::string::String,
 }
+/// Nested message and enum types in `Money`.
+pub mod money {
+    /// Список денежных сумм (балансы по нескольким валютам).
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct List {
+        #[prost(message, repeated, tag = "1")]
+        pub items: ::prost::alloc::vec::Vec<super::Money>,
+    }
+}
 /// Диапазон дат для фильтрации.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DateRange {
