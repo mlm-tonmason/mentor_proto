@@ -4,18 +4,39 @@ package mentor.client.billing;
 
 import "mentor/types/billing.proto";
 import "mentor/types/common.proto";
+import "mentor/types/bot.proto";
 import "google/protobuf/empty.proto";
 
 // Сервис Биллинга (Клиентский API).
 service BillingService {
+  // --- Дашборд ---
+
   // Получить дашборд подписок (Суммы, Балансы, Активные подписки).
   rpc GetSubscriptionDashboard(google.protobuf.Empty) returns (mentor.types.billing.SubscriptionDashboardData);
+
+  // --- Покупка ---
 
   // Приобрести подписку на бота (или сменить тариф).
   // По глобальному ID тарифного плана система определяет автора и проверяет текущую подписку пользователя.
   // Если подписка уже есть, происходит Upgrade/Downgrade или продление.
   // Если нет — создается новая подписка.
   rpc PurchaseBotSubscription(mentor.types.billing.BotTariffPlan.Id) returns (mentor.types.billing.BotSubscription);
+
+  // --- Управление подписками ---
+
+  // Получить список всех своих подписок (активные, отменённые, истёкшие).
+  rpc GetMySubscriptions(GetMySubscriptionsRequest) returns (GetMySubscriptionsResponse);
+
+  // Получить детали квот конкретной подписки (расход ресурсов, лимиты, привязки ботов).
+  rpc GetSubscriptionQuotas(GetSubscriptionQuotasRequest) returns (GetSubscriptionQuotasResponse);
+
+  // Отменить подписку (отмена автопродления, подписка дорабатывает до конца оплаченного срока).
+  rpc CancelSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionResponse);
+
+  // Включить/выключить автопродление подписки.
+  rpc ToggleAutoRenew(ToggleAutoRenewRequest) returns (ToggleAutoRenewResponse);
+
+  // --- Финансы ---
 
   // Получить балансы текущего пользователя по всем валютам.
   rpc GetBalances(google.protobuf.Empty) returns (mentor.types.Money.List);
@@ -29,3 +50,93 @@ service BillingService {
   // По умолчанию сортировка ASC (от старых к новым), можно изменить в Cursor.sort_order.
   rpc GetTransactions(mentor.types.Cursor) returns (mentor.types.billing.Transaction.List);
 }
+
+// --- Управление подписками ---
+
+// Запрос на получение списка своих подписок.
+message GetMySubscriptionsRequest {
+    // Фильтр по статусу (если не указан — все подписки).
+    mentor.types.billing.BotSubscription.Status.Id status_filter = 1;
+}
+
+// Ответ со списком подписок пользователя.
+message GetMySubscriptionsResponse {
+    // Список подписок.
+    repeated mentor.types.billing.BotSubscription subscriptions = 1;
+
+    // Связанные тарифные планы (для отображения названий и лимитов).
+    repeated mentor.types.billing.BotTariffPlan plans = 2;
+
+    // Связанные боты (для отображения аватарок и имён).
+    repeated mentor.types.bot.Bot bots = 3;
+}
+
+// Запрос на детали квот подписки.
+message GetSubscriptionQuotasRequest {
+    // Идентификатор подписки.
+    uint32 subscription_id = 1;
+}
+
+// Детальный ответ по квотам подписки.
+message GetSubscriptionQuotasResponse {
+    // Идентификатор подписки.
+    uint32 subscription_id = 1;
+
+    // Список квот с данными об использовании.
+    repeated QuotaUsage quotas = 2;
+}
+
+// Использование одной квоты.
+message QuotaUsage {
+    // Идентификатор квоты.
+    uint32 quota_id = 1;
+
+    // Название квоты.
+    string name = 2;
+
+    // Доступный лимит за период (Total).
+    uint32 total = 3;
+
+    // Уже использовано за период (Used).
+    uint32 used = 4;
+
+    // В обработке (Reserved — "бот думает").
+    uint32 reserved = 5;
+
+    // Доступно сейчас (Available = Total - Used - Reserved).
+    uint32 available = 6;
+
+    // Текущий период (начало и конец).
+    mentor.types.DateRange current_period = 7;
+
+    // Список ботов, привязанных к этой квоте (Sharing).
+    repeated mentor.types.bot.Bot bots = 8;
+}
+
+// Запрос на отмену подписки.
+message CancelSubscriptionRequest {
+    // Идентификатор подписки.
+    uint32 subscription_id = 1;
+}
+
+// Ответ с обновлённой подпиской.
+message CancelSubscriptionResponse {
+    // Подписка со статусом CANCELLED.
+    // Подписка продолжает действовать до конца оплаченного периода.
+    mentor.types.billing.BotSubscription subscription = 1;
+}
+
+// Запрос на переключение автопродления.
+message ToggleAutoRenewRequest {
+    // Идентификатор подписки.
+    uint32 subscription_id = 1;
+
+    // true — включить автопродление, false — выключить.
+    bool auto_renew = 2;
+}
+
+// Ответ с обновлённой подпиской.
+message ToggleAutoRenewResponse {
+    mentor.types.billing.BotSubscription subscription = 1;
+}
+

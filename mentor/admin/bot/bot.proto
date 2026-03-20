@@ -8,15 +8,41 @@ import "mentor/types/billing.proto";
 
 // Админ-сервис управления ботами.
 service BotAdminService {
+    // --- CRUD ботов ---
     rpc CreateBot(CreateBotRequest) returns (CreateBotResponse);
     rpc UpdateBot(UpdateBotRequest) returns (UpdateBotResponse);
     rpc DeleteBot(mentor.types.bot.Bot.Id) returns (google.protobuf.Empty);
     rpc ListBots(ListBotsRequest) returns (ListBotsResponse);
 
-    // Управление тарифами бота.
+    // --- Управление статусом ---
+
+    // Явная смена статуса бота (Draft → Published → Archived и т.д.).
+    rpc UpdateBotStatus(UpdateBotStatusRequest) returns (UpdateBotResponse);
+
+    // Пометить бота как «горячий/трендовый» для промо в маркете.
+    // Доступ: только администратор.
+    rpc SetBotHot(SetBotHotRequest) returns (UpdateBotResponse);
+
+    // --- Управление тарифами ---
     rpc CreatePricingPlan(CreatePricingPlanRequest) returns (CreatePricingPlanResponse);
     rpc UpdatePricingPlan(UpdatePricingPlanRequest) returns (UpdatePricingPlanResponse);
+
+    // --- Управление квотами ---
+
+    // Создать именованную квоту внутри тарифного плана.
+    rpc CreateQuota(CreateQuotaRequest) returns (CreateQuotaResponse);
+
+    // Привязать бота к квоте внутри плана для конкретного типа использования.
+    rpc BindBotToQuota(BindBotToQuotaRequest) returns (google.protobuf.Empty);
+
+    // Отвязать бота от квоты.
+    rpc UnbindBotFromQuota(BindBotToQuotaRequest) returns (google.protobuf.Empty);
+
+    // Получить все квоты плана с привязками ботов.
+    rpc ListPlanQuotas(ListPlanQuotasRequest) returns (ListPlanQuotasResponse);
 }
+
+// --- CRUD ботов ---
 
 message CreateBotRequest {
     mentor.types.bot.Bot bot = 1;
@@ -34,7 +60,6 @@ message UpdateBotResponse {
     mentor.types.bot.Bot bot = 1;
 }
 
-
 message ListBotsRequest {
     int32 page_size = 1;
     string page_token = 2;
@@ -44,6 +69,28 @@ message ListBotsResponse {
     repeated mentor.types.bot.Bot items = 1;
     string next_page_token = 2;
 }
+
+// --- Управление статусом ---
+
+// Запрос на явную смену статуса бота.
+message UpdateBotStatusRequest {
+    // Идентификатор бота.
+    uint32 bot_id = 1;
+
+    // Новый статус бота.
+    mentor.types.bot.Bot.Status.Id new_status = 2;
+}
+
+// Запрос на установку/снятие «горячего» бейджа.
+message SetBotHotRequest {
+    // Идентификатор бота.
+    uint32 bot_id = 1;
+
+    // true — пометить как горячий, false — снять метку.
+    bool is_hot = 2;
+}
+
+// --- Управление тарифами ---
 
 message CreatePricingPlanRequest {
     mentor.types.billing.BotTariffPlan plan = 1;
@@ -59,4 +106,98 @@ message UpdatePricingPlanRequest {
 
 message UpdatePricingPlanResponse {
     mentor.types.billing.BotTariffPlan plan = 1;
+}
+
+// --- Управление квотами ---
+
+// Тип использования ресурса ботом.
+message UsageType {
+    enum Id {
+        UNSPECIFIED = 0;   // Не указан.
+        CHAT_MESSAGE = 1;  // Текстовое сообщение.
+        VOICE_CALL = 2;    // Голосовой звонок.
+    }
+}
+
+// Запрос на создание квоты внутри тарифного плана.
+message CreateQuotaRequest {
+    // Идентификатор тарифного плана.
+    uint32 plan_id = 1;
+
+    // Человекочитаемое название квоты ("Базовая", "PRO").
+    string name = 2;
+
+    // Дневной лимит (0 = ресурс запрещён).
+    uint64 daily_limit = 3;
+
+    // Тип продукта (ChatMessage, VoiceCall).
+    UsageType.Id usage_type = 4;
+}
+
+// Ответ с созданной квотой.
+message CreateQuotaResponse {
+    // Идентификатор созданной квоты.
+    uint32 quota_id = 1;
+
+    // Идентификатор плана.
+    uint32 plan_id = 2;
+
+    // Название квоты.
+    string name = 3;
+
+    // Дневной лимит.
+    uint64 daily_limit = 4;
+
+    // Тип продукта.
+    UsageType.Id usage_type = 5;
+}
+
+// Запрос на привязку/отвязку бота к квоте.
+message BindBotToQuotaRequest {
+    // Идентификатор тарифного плана.
+    uint32 plan_id = 1;
+
+    // Идентификатор бота.
+    uint32 bot_id = 2;
+
+    // Тип использования (ChatMessage, VoiceCall).
+    UsageType.Id usage_type = 3;
+
+    // Идентификатор квоты, к которой привязывается бот.
+    uint32 quota_id = 4;
+}
+
+// Запрос на получение квот плана.
+message ListPlanQuotasRequest {
+    // Идентификатор тарифного плана.
+    uint32 plan_id = 1;
+}
+
+// Ответ со списком квот плана и их привязками.
+message ListPlanQuotasResponse {
+    repeated QuotaWithBindings quotas = 1;
+}
+
+// Квота с привязанными ботами.
+message QuotaWithBindings {
+    // Идентификатор квоты.
+    uint32 quota_id = 1;
+
+    // Название квоты.
+    string name = 2;
+
+    // Дневной лимит.
+    uint64 daily_limit = 3;
+
+    // Список привязок ботов к этой квоте.
+    repeated BotBinding bindings = 4;
+}
+
+// Привязка бота к квоте.
+message BotBinding {
+    // Идентификатор бота.
+    uint32 bot_id = 1;
+
+    // Тип использования.
+    UsageType.Id usage_type = 2;
 }

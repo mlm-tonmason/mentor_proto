@@ -68,5 +68,33 @@ pub mod mentor {
         pub mod system {
             include!("generated/mentor.client.system.rs");
         }
+        /// Управление ботами и тарифами для авторов.
+        pub mod bot {
+            include!("generated/mentor.client.bot.rs");
+        }
+    }
+
+    /// Административное API для управления ботами, профилями и голосами.
+    pub mod admin {
+        /// CRUD ботов, управление тарифными планами.
+        pub mod bot {
+            include!("generated/mentor.admin.bot.rs");
+        }
+        /// Шаблоны профилей пользователей (LLM-память).
+        pub mod profile {
+            include!("generated/mentor.admin.profile.rs");
+        }
+        /// Управление голосовыми моделями (VAPI).
+        pub mod voice {
+            include!("generated/mentor.admin.voice.rs");
+        }
+        /// Управление настройками авторов (лимиты ботов).
+        pub mod author {
+            include!("generated/mentor.admin.author.rs");
+        }
+        /// Управление подписками (выдача, продление, отмена).
+        pub mod subscription {
+            include!("generated/mentor.admin.subscription.rs");
+        }
     }
 }

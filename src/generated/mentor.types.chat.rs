@@ -190,9 +190,9 @@ pub mod message {
     pub mod content {
         #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
         pub struct AudioContent {
-            /// Ссылка на аудиофайл (CDN / S3).
+            /// Внутренний идентификатор файла аудио.
             #[prost(string, tag = "1")]
-            pub url: ::prost::alloc::string::String,
+            pub file_id: ::prost::alloc::string::String,
             /// Текст расшифровки (Speech-to-Text).
             #[prost(string, tag = "2")]
             pub transcription: ::prost::alloc::string::String,

@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package mentor.admin.subscription;
+
+import "mentor/types/billing.proto";
+import "mentor/types/identity.proto";
+
+// Админ-сервис управления подписками.
+// Позволяет администратору подарить, продлить и отменить подписки пользователей.
+service SubscriptionAdminService {
+    // Подарить подписку пользователю без оплаты (промо, тестирование, компенсация).
+    rpc GrantSubscription(GrantSubscriptionRequest) returns (GrantSubscriptionResponse);
+
+    // Продлить существующую подписку на дополнительный период.
+    rpc ExtendSubscription(ExtendSubscriptionRequest) returns (ExtendSubscriptionResponse);
+
+    // Принудительно отменить подписку.
+    rpc CancelSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionResponse);
+
+    // Получить детальную информацию о подписке (для расследований).
+    rpc GetSubscription(GetSubscriptionRequest) returns (GetSubscriptionResponse);
+
+    // Получить все подписки конкретного пользователя (для поддержки).
+    rpc ListUserSubscriptions(ListUserSubscriptionsRequest) returns (ListUserSubscriptionsResponse);
+}
+
+// --- Запросы и ответы ---
+
+// Запрос на выдачу бесплатной подписки.
+message GrantSubscriptionRequest {
+    // Идентификатор пользователя (distributor_id), которому дарим подписку.
+    uint32 distributor_id = 1;
+
+    // Идентификатор тарифного плана.
+    uint32 plan_id = 2;
+
+    // Длительность подписки в месяцах (переопределяет duration из плана).
+    uint32 duration_months = 3;
+
+    // Причина выдачи (для аудит-лога).
+    string reason = 4;
+}
+
+// Ответ с созданной подпиской и транзакцией.
+message GrantSubscriptionResponse {
+    // Созданная подписка (статус сразу Active).
+    mentor.types.billing.BotSubscription subscription = 1;
+
+    // Транзакция с amount = 0 (маркер бесплатной выдачи).
+    mentor.types.billing.Transaction transaction = 2;
+}
+
+// Запрос на продление существующей подписки.
+message ExtendSubscriptionRequest {
+    // Идентификатор подписки.
+    uint32 subscription_id = 1;
+
+    // Количество дополнительных месяцев.
+    uint32 additional_months = 2;
+
+    // Причина продления (для аудит-лога).
+    string reason = 3;
+}
+
+// Ответ с обновлённой подпиской.
+message ExtendSubscriptionResponse {
+    mentor.types.billing.BotSubscription subscription = 1;
+}
+
+// Запрос на принудительную отмену подписки.
+message CancelSubscriptionRequest {
+    // Идентификатор подписки.
+    uint32 subscription_id = 1;
+
+    // Причина отмены (для аудит-лога).
+    string reason = 2;
+}
+
+// Ответ с отменённой подпиской.
+message CancelSubscriptionResponse {
+    mentor.types.billing.BotSubscription subscription = 1;
+}
+
+// Запрос на детальную информацию о подписке.
+message GetSubscriptionRequest {
+    // Идентификатор подписки.
+    uint32 subscription_id = 1;
+}
+
+// Детальный ответ с подпиской и связанными сущностями.
+message GetSubscriptionResponse {
+    // Сама подписка.
+    mentor.types.billing.BotSubscription subscription = 1;
+
+    // Тарифный план, по которому приобретена подписка.
+    mentor.types.billing.BotTariffPlan plan = 2;
+
+    // Профиль подписчика (кто купил/получил).
+    mentor.types.identity.PublicUserProfile subscriber = 3;
+
+    // Профиль создателя контента (на кого подписались).
+    mentor.types.identity.PublicUserProfile creator = 4;
+}
+
+// Запрос на все подписки пользователя.
+message ListUserSubscriptionsRequest {
+    // Идентификатор пользователя (distributor_id).
+    uint32 distributor_id = 1;
+}
+
+// Ответ со списком подписок пользователя.
+message ListUserSubscriptionsResponse {
+    repeated mentor.types.billing.BotSubscription subscriptions = 1;
+}

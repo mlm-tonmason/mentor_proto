@@ -2,97 +2,56 @@ syntax = "proto3";
 
 package mentor.admin.profile;
 
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/struct.proto";
+import "mentor/types/identity.proto";
 
-// Админ-сервис управления шаблонами профилей.
+// Админ-сервис управления профилями пользователей.
+// Предоставляет администратору инструменты для поддержки и расследований.
 service ProfileAdminService {
-    // Шаблоны.
-    rpc CreateTemplate(CreateTemplateRequest) returns (CreateTemplateResponse);
-    rpc UpdateTemplate(UpdateTemplateRequest) returns (UpdateTemplateResponse);
-    rpc ListTemplates(ListTemplatesRequest) returns (ListTemplatesResponse);
+    // Получить полный профиль любого пользователя (для поддержки, расследований).
+    // Доступ: только администратор.
+    rpc GetUserProfile(GetUserProfileRequest) returns (UserProfileResponse);
 
-    // Версионирование.
-    rpc CreateTemplateVersion(CreateTemplateVersionRequest) returns (CreateTemplateVersionResponse);
-    rpc GetTemplateVersion(GetTemplateVersionRequest) returns (GetTemplateVersionResponse);
-
-    // Привязка к ботам.
-    rpc BindBotToTemplate(BindBotToTemplateRequest) returns (BindBotToTemplateResponse);
+    // Поиск пользователей по telegram_id или telegram_username.
+    // Доступ: только администратор.
+    rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
 }
 
-// Шаблон профиля пользователя (схема данных для LLM).
-// Определяет, какие поля бот должен заполнять о пользователе.
-message UserProfileTemplate {
-  string template_id = 1;    // Уникальный идентификатор шаблона.
-  string display_name = 2;   // Человекочитаемое название.
-  string description = 3;    // Описание назначения шаблона.
-  string active_version = 4; // Текущая активная версия (семантическая).
+// --- Запросы и ответы ---
 
-  google.protobuf.Timestamp created_at = 5;
-  google.protobuf.Timestamp updated_at = 6;
+// Запрос на получение профиля пользователя.
+message GetUserProfileRequest {
+    // Идентификатор пользователя (distributor_id).
+    uint32 distributor_id = 1;
 }
 
-// Версия шаблона профиля (конкретная схема).
-message UserProfileTemplateVersion {
-  string template_id = 1; // Ссылка на шаблон.
-  string version = 2;     // Версия (например, "1.0.0").
+// Расширенный профиль пользователя для админки.
+// Агрегирует данные профиля и статистику по ботам/подпискам.
+message UserProfileResponse {
+    // Полный профиль пользователя.
+    mentor.types.identity.UserProfile profile = 1;
 
-  // Схема данных (JSON Schema или произвольная структура).
-  // Определяет, какие поля бот должен извлекать из диалога.
-  google.protobuf.Struct schema = 3;
+    // Максимальное количество ботов, разрешённое автору.
+    uint32 max_bots = 2;
 
-  google.protobuf.Timestamp created_at = 4;
+    // Текущее количество созданных ботов.
+    uint32 current_bot_count = 3;
+
+    // Количество активных подписок.
+    uint32 active_subscriptions_count = 4;
 }
 
-message CreateTemplateRequest {
-    UserProfileTemplate template = 1;
+// Запрос на поиск пользователей.
+// Поиск выполняется по одному из полей (приоритет: telegram_id > telegram_username).
+message SearchUsersRequest {
+    // Поиск по Telegram ID (точное совпадение).
+    int64 telegram_id = 1;
+
+    // Поиск по @username (точное совпадение, без @).
+    string telegram_username = 2;
 }
 
-message CreateTemplateResponse {
-    UserProfileTemplate template = 1;
-}
-
-message UpdateTemplateRequest {
-    UserProfileTemplate template = 1;
-}
-
-message UpdateTemplateResponse {
-    UserProfileTemplate template = 1;
-}
-
-message ListTemplatesRequest {
-    int32 page_size = 1;
-    string page_token = 2;
-}
-
-message ListTemplatesResponse {
-    repeated UserProfileTemplate items = 1;
-    string next_page_token = 2;
-}
-
-message CreateTemplateVersionRequest {
-    UserProfileTemplateVersion version = 1;
-}
-
-message CreateTemplateVersionResponse {
-    UserProfileTemplateVersion version = 1;
-}
-
-message GetTemplateVersionRequest {
-    string template_id = 1;
-    string version = 2;
-}
-
-message GetTemplateVersionResponse {
-    UserProfileTemplateVersion version = 1;
-}
-
-message BindBotToTemplateRequest {
-    string bot_id = 1;
-    string template_id = 2;
-}
-
-message BindBotToTemplateResponse {
-    bool success = 1;
+// Ответ со списком найденных пользователей.
+message SearchUsersResponse {
+    repeated mentor.types.identity.PublicUserProfile users = 1;
 }
 

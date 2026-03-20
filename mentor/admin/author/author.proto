@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package mentor.admin.author;
+
+// Админ-сервис управления настройками авторов.
+// Позволяет администратору управлять лимитами и разрешениями авторов.
+service AuthorAdminService {
+    // Установить лимит на количество ботов, которые автор может создать.
+    rpc SetAuthorBotLimit(SetAuthorBotLimitRequest) returns (SetAuthorBotLimitResponse);
+
+    // Получить текущий лимит автора на создание ботов.
+    rpc GetAuthorBotLimit(GetAuthorBotLimitRequest) returns (GetAuthorBotLimitResponse);
+}
+
+// Настройки автора (лимиты и разрешения).
+message AuthorSettings {
+    // Идентификатор автора (distributor_id из PublicUserProfile).
+    uint32 author_id = 1;
+
+    // Максимальное количество ботов, которое автор может создать.
+    // Значение 0 означает, что автору запрещено создавать ботов.
+    uint32 max_bots = 2;
+
+    // Текущее количество созданных ботов (только для чтения, заполняется сервером).
+    uint32 current_bot_count = 3;
+}
+
+// --- Запросы и ответы ---
+
+// Запрос на установку лимита ботов для автора.
+message SetAuthorBotLimitRequest {
+    // Идентификатор автора (distributor_id).
+    uint32 author_id = 1;
+
+    // Новый лимит на количество ботов.
+    // Значение 0 — запрет на создание ботов.
+    uint32 max_bots = 2;
+}
+
+// Ответ с обновлёнными настройками автора.
+message SetAuthorBotLimitResponse {
+    AuthorSettings settings = 1;
+}
+
+// Запрос на получение лимита ботов автора.
+message GetAuthorBotLimitRequest {
+    // Идентификатор автора (distributor_id).
+    uint32 author_id = 1;
+}
+
+// Ответ с текущими настройками автора.
+message GetAuthorBotLimitResponse {
+    AuthorSettings settings = 1;
+}

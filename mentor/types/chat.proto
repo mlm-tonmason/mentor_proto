@@ -55,7 +55,7 @@ message Message {
   // Основной контент сообщения.
   message Content {
     message AudioContent {
-      string url = 1;            // Ссылка на аудиофайл (CDN / S3).
+      string file_id = 1;            // Внутренний идентификатор файла аудио.
       string transcription = 2;  // Текст расшифровки (Speech-to-Text).
       int32 duration_seconds = 3; // Длительность аудио в секундах.
       string mime_type = 4;      // MIME type, например "audio/ogg".

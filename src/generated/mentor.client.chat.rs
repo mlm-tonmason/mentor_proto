@@ -105,6 +105,23 @@ pub mod send_message_request {
         AudioData(::prost::alloc::vec::Vec<u8>),
     }
 }
+/// Запрос на скачивание аудиофайла.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DownloadAudioRequest {
+    /// Внутренний идентификатор аудиофайла (из MessageContentEntity::Audio.file_id).
+    #[prost(string, tag = "1")]
+    pub file_id: ::prost::alloc::string::String,
+}
+/// Ответ с аудиоданными.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DownloadAudioResponse {
+    /// Сырые аудиоданные (бинарные).
+    #[prost(bytes = "vec", tag = "1")]
+    pub data: ::prost::alloc::vec::Vec<u8>,
+    /// MIME-тип (например "audio/ogg", "audio/wav").
+    #[prost(string, tag = "2")]
+    pub content_type: ::prost::alloc::string::String,
+}
 /// Generated server implementations.
 pub mod chat_service_server {
     #![allow(
@@ -223,6 +240,15 @@ pub mod chat_service_server {
             &self,
             request: tonic::Request<super::super::super::types::chat::message::Id>,
         ) -> std::result::Result<tonic::Response<()>, tonic::Status>;
+        /// Скачать аудиофайл по file_id.
+        /// Сервер проверяет права: файл принадлежит сообщению в треде текущего пользователя.
+        async fn download_audio(
+            &self,
+            request: tonic::Request<super::DownloadAudioRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::DownloadAudioResponse>,
+            tonic::Status,
+        >;
         /// Server streaming response type for the SubscribeToEvents method.
         type SubscribeToEventsStream: tonic::codegen::tokio_stream::Stream<
                 Item = std::result::Result<
@@ -910,6 +936,51 @@ pub mod chat_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = RemoveFromFavoritesSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/mentor.client.chat.ChatService/DownloadAudio" => {
+                    #[allow(non_camel_case_types)]
+                    struct DownloadAudioSvc<T: ChatService>(pub Arc<T>);
+                    impl<
+                        T: ChatService,
+                    > tonic::server::UnaryService<super::DownloadAudioRequest>
+                    for DownloadAudioSvc<T> {
+                        type Response = super::DownloadAudioResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::DownloadAudioRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as ChatService>::download_audio(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = DownloadAudioSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

@@ -1,0 +1,227 @@
+syntax = "proto3";
+
+package mentor.client.bot;
+
+import "google/protobuf/empty.proto";
+import "mentor/types/bot.proto";
+import "mentor/types/billing.proto";
+import "mentor/types/common.proto";
+
+// Клиентский сервис управления ботами для авторов.
+// Автор — пользователь, которому администратор разрешил создавать ботов (max_bots > 0).
+// Все операции проверяют, что текущий пользователь является создателем (creator_id) сущности.
+service BotService {
+    // --- Управление ботами ---
+
+    // Создать нового бота (черновик).
+    // Проверяет лимит: current_bot_count < max_bots, иначе — PermissionDenied.
+    rpc CreateBot(CreateBotRequest) returns (CreateBotResponse);
+
+    // Обновить данные бота (имя, описание, аватар, теги).
+    // Доступ: только создатель бота.
+    rpc UpdateBot(UpdateBotRequest) returns (UpdateBotResponse);
+
+    // Удалить бота (мягкое удаление — перевод в статус ARCHIVED).
+    // Доступ: только создатель бота.
+    rpc DeleteBot(mentor.types.bot.Bot.Id) returns (google.protobuf.Empty);
+
+    // Получить детальную информацию о своём боте.
+    // Доступ: только создатель бота.
+    rpc GetBot(mentor.types.bot.Bot.Id) returns (mentor.types.bot.Bot);
+
+    // Получить список своих ботов.
+    rpc ListMyBots(ListMyBotsRequest) returns (ListMyBotsResponse);
+
+    // --- Управление статусом ---
+
+    // Сменить статус бота (Draft → Moderation, Published → Archived и т.д.).
+    // Доступ: только создатель бота.
+    // Переход в PUBLISHED требует прохождения модерации (MODERATION → PUBLISHED — только админ).
+    rpc UpdateBotStatus(UpdateBotStatusRequest) returns (UpdateBotResponse);
+
+    // --- Управление тарифными планами ---
+
+    // Создать тарифный план для своего бота.
+    // План создаётся в статусе DRAFT.
+    // Доступ: только создатель бота-владельца плана.
+    rpc CreatePricingPlan(CreatePricingPlanRequest) returns (CreatePricingPlanResponse);
+
+    // Обновить тарифный план (цена, длительность, состав ботов).
+    // Доступ: только создатель.
+    rpc UpdatePricingPlan(UpdatePricingPlanRequest) returns (UpdatePricingPlanResponse);
+
+    // Получить список тарифных планов автора.
+    rpc ListMyPricingPlans(ListMyPricingPlansRequest) returns (ListMyPricingPlansResponse);
+
+    // Сменить статус тарифного плана (DRAFT → ACTIVE → ARCHIVED).
+    // Доступ: только создатель.
+    rpc UpdatePricingPlanStatus(UpdatePricingPlanStatusRequest) returns (UpdatePricingPlanResponse);
+
+    // --- Статистика автора ---
+
+    // Получить сводку автора: лимиты, количество ботов, количество подписчиков.
+    rpc GetAuthorDashboard(google.protobuf.Empty) returns (AuthorDashboardResponse);
+}
+
+// --- Управление ботами ---
+
+// Запрос на создание бота.
+message CreateBotRequest {
+    // Уникальный системный хендл (@handle).
+    string system_name = 1;
+
+    // Отображаемое имя.
+    string display_name = 2;
+
+    // URL аватарки.
+    string avatar_url = 3;
+
+    // Краткое описание (для карточки в каталоге).
+    string short_description = 4;
+
+    // Полное описание (для детальной страницы).
+    string long_description = 5;
+
+    // Жанр бота (Twin или Expert).
+    mentor.types.bot.Bot.Genre.Id genre = 6;
+
+    // Теги категорий.
+    repeated string tags = 7;
+}
+
+// Ответ с созданным ботом.
+message CreateBotResponse {
+    mentor.types.bot.Bot bot = 1;
+}
+
+// Запрос на обновление бота.
+message UpdateBotRequest {
+    // Идентификатор обновляемого бота.
+    uint32 bot_id = 1;
+
+    // Обновляемые поля (все опциональные — обновляются только переданные).
+    optional string display_name = 2;
+    optional string avatar_url = 3;
+    optional string short_description = 4;
+    optional string long_description = 5;
+    repeated string tags = 6;
+}
+
+// Ответ с обновлённым ботом.
+message UpdateBotResponse {
+    mentor.types.bot.Bot bot = 1;
+}
+
+// Запрос на список своих ботов.
+message ListMyBotsRequest {
+    // Фильтр по статусу (если не указан — все статусы).
+    mentor.types.bot.Bot.Status.Id status_filter = 1;
+
+    // Пагинация.
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+// Ответ со списком ботов автора.
+message ListMyBotsResponse {
+    repeated mentor.types.bot.Bot items = 1;
+    string next_page_token = 2;
+}
+
+// --- Управление статусом ---
+
+// Запрос на смену статуса бота.
+message UpdateBotStatusRequest {
+    // Идентификатор бота.
+    uint32 bot_id = 1;
+
+    // Новый статус.
+    // Автор может: DRAFT → MODERATION (отправить на модерацию),
+    //              PUBLISHED → ARCHIVED (скрыть).
+    // Только админ может: MODERATION → PUBLISHED, любой → BLOCKED.
+    mentor.types.bot.Bot.Status.Id new_status = 2;
+}
+
+// --- Управление тарифными планами ---
+
+// Запрос на создание тарифного плана.
+message CreatePricingPlanRequest {
+    // Тарифный план (creator_id заполняется сервером из сессии).
+    mentor.types.billing.BotTariffPlan plan = 1;
+}
+
+// Ответ с созданным планом.
+message CreatePricingPlanResponse {
+    mentor.types.billing.BotTariffPlan plan = 1;
+}
+
+// Запрос на обновление тарифного плана.
+message UpdatePricingPlanRequest {
+    // Обновлённый тарифный план.
+    mentor.types.billing.BotTariffPlan plan = 1;
+}
+
+// Ответ с обновлённым планом.
+message UpdatePricingPlanResponse {
+    mentor.types.billing.BotTariffPlan plan = 1;
+}
+
+// Запрос на список тарифных планов автора.
+message ListMyPricingPlansRequest {
+    // Фильтр по статусу плана (если не указан — все).
+    mentor.types.billing.BotTariffPlan.Status.Id status_filter = 1;
+
+    // Пагинация.
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+// Ответ со списком тарифных планов.
+message ListMyPricingPlansResponse {
+    repeated mentor.types.billing.BotTariffPlan items = 1;
+    string next_page_token = 2;
+}
+
+// Запрос на смену статуса тарифного плана.
+message UpdatePricingPlanStatusRequest {
+    // Идентификатор плана.
+    uint32 plan_id = 1;
+
+    // Новый статус (DRAFT → ACTIVE → ARCHIVED).
+    mentor.types.billing.BotTariffPlan.Status.Id new_status = 2;
+}
+
+// --- Статистика автора ---
+
+// Сводка дашборда автора.
+message AuthorDashboardResponse {
+    // Максимальное количество ботов, разрешённое автору.
+    uint32 max_bots = 1;
+
+    // Текущее количество созданных ботов.
+    uint32 current_bot_count = 2;
+
+    // Общее количество активных подписчиков на ботов автора.
+    uint32 total_subscribers = 3;
+
+    // Список ботов автора с краткой статистикой.
+    repeated BotSummary bot_summaries = 4;
+}
+
+// Краткая статистика по боту (для дашборда автора).
+message BotSummary {
+    // Идентификатор бота.
+    uint32 bot_id = 1;
+
+    // Отображаемое имя.
+    string display_name = 2;
+
+    // Текущий статус.
+    mentor.types.bot.Bot.Status.Id status = 3;
+
+    // Количество активных подписчиков.
+    uint32 subscriber_count = 4;
+
+    // Рейтинг бота.
+    mentor.types.Rating rating = 5;
+}

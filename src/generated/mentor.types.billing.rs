@@ -174,11 +174,11 @@ pub mod bot_subscription {
         )]
         #[repr(i32)]
         pub enum Id {
-            /// Не указан
-            Unspecified = 0,
+            /// Ожидает оплаты (заявка отправлена во внешний сервис)
+            Pending = 0,
             /// Активна
             Active = 1,
-            /// Отменена (действует до конца периода)
+            /// Отменена / отклонена (недостаточно средств и т.д.)
             Cancelled = 2,
             /// Истекла
             Expired = 3,
@@ -192,7 +192,7 @@ pub mod bot_subscription {
             /// (if the ProtoBuf definition does not change) and safe for programmatic use.
             pub fn as_str_name(&self) -> &'static str {
                 match self {
-                    Self::Unspecified => "UNSPECIFIED",
+                    Self::Pending => "PENDING",
                     Self::Active => "ACTIVE",
                     Self::Cancelled => "CANCELLED",
                     Self::Expired => "EXPIRED",
@@ -202,7 +202,7 @@ pub mod bot_subscription {
             /// Creates an enum from field names used in the ProtoBuf definition.
             pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
                 match value {
-                    "UNSPECIFIED" => Some(Self::Unspecified),
+                    "PENDING" => Some(Self::Pending),
                     "ACTIVE" => Some(Self::Active),
                     "CANCELLED" => Some(Self::Cancelled),
                     "EXPIRED" => Some(Self::Expired),

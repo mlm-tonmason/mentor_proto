@@ -66,6 +66,10 @@ service ChatService {
   // Удалить сообщение из избранного.
   rpc RemoveFromFavorites(mentor.types.chat.Message.Id) returns (google.protobuf.Empty);
 
+  // Скачать аудиофайл по file_id.
+  // Сервер проверяет права: файл принадлежит сообщению в треде текущего пользователя.
+  rpc DownloadAudio(DownloadAudioRequest) returns (DownloadAudioResponse);
+
   // --- Real-time ---
   
   // Подписка на события (Тайпинг, Новые сообщения).
@@ -133,4 +137,18 @@ message SendMessageRequest {
     string text = 2;      // Текстовое сообщение.
     bytes audio_data = 3; // Голосовое сообщение (raw bytes / encoded).
   }
+}
+
+// Запрос на скачивание аудиофайла.
+message DownloadAudioRequest {
+  // Внутренний идентификатор аудиофайла (из MessageContentEntity::Audio.file_id).
+  string file_id = 1;
+}
+
+// Ответ с аудиоданными.
+message DownloadAudioResponse {
+  // Сырые аудиоданные (бинарные).
+  bytes data = 1;
+  // MIME-тип (например "audio/ogg", "audio/wav").
+  string content_type = 2;
 }
